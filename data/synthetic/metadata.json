@@ -1,0 +1,168 @@
+{
+  "generation_params": {
+    "n_samples": 15000,
+    "noise_std": 0.08,
+    "random_seed": 42,
+    "class_proportions": {
+      "focused": 0.5,
+      "distracted": 0.3,
+      "confused": 0.2
+    },
+    "feature_names": [
+      "click_frequency",
+      "hesitation_time",
+      "misclick_rate",
+      "scroll_depth",
+      "movement_smoothness",
+      "dwell_time",
+      "navigation_speed",
+      "direction_changes"
+    ],
+    "behavior_classes": [
+      "focused",
+      "distracted",
+      "confused"
+    ],
+    "distributions": {
+      "focused": {
+        "means": [
+          0.8,
+          0.1,
+          0.05,
+          0.7,
+          0.9,
+          0.3,
+          0.7,
+          0.1
+        ],
+        "stds": [
+          0.1,
+          0.05,
+          0.03,
+          0.1,
+          0.05,
+          0.1,
+          0.1,
+          0.05
+        ]
+      },
+      "distracted": {
+        "means": [
+          0.5,
+          0.5,
+          0.3,
+          0.4,
+          0.5,
+          0.6,
+          0.4,
+          0.4
+        ],
+        "stds": [
+          0.2,
+          0.2,
+          0.15,
+          0.2,
+          0.2,
+          0.2,
+          0.25,
+          0.2
+        ]
+      },
+      "confused": {
+        "means": [
+          0.3,
+          0.8,
+          0.6,
+          0.2,
+          0.2,
+          0.7,
+          0.2,
+          0.8
+        ],
+        "stds": [
+          0.15,
+          0.15,
+          0.2,
+          0.15,
+          0.15,
+          0.15,
+          0.15,
+          0.15
+        ]
+      }
+    }
+  },
+  "split": {
+    "train_size": 12000,
+    "test_size": 3000,
+    "test_ratio": 0.2
+  },
+  "class_counts": {
+    "train": {
+      "focused": 5963,
+      "distracted": 3619,
+      "confused": 2418
+    },
+    "test": {
+      "focused": 1537,
+      "distracted": 881,
+      "confused": 582
+    }
+  },
+  "feature_stats": {
+    "click_frequency": {
+      "mean": -1.4592011439162889e-06,
+      "std": 1.0000028610229492,
+      "min": -2.3437676429748535,
+      "max": 1.5129989385604858
+    },
+    "hesitation_time": {
+      "mean": -2.3609798063262133e-06,
+      "std": 0.9999957084655762,
+      "min": -1.1593824625015259,
+      "max": 2.0134825706481934
+    },
+    "misclick_rate": {
+      "mean": 2.953688408524613e-06,
+      "std": 1.0000079870224,
+      "min": -0.9869633913040161,
+      "max": 3.07743763923645
+    },
+    "scroll_depth": {
+      "mean": 6.081262995394354e-07,
+      "std": 1.0000015497207642,
+      "min": -2.0048370361328125,
+      "max": 1.9287197589874268
+    },
+    "movement_smoothness": {
+      "mean": -2.0581881017278647e-06,
+      "std": 0.9999963045120239,
+      "min": -2.0470097064971924,
+      "max": 1.165606141090393
+    },
+    "dwell_time": {
+      "mean": 1.0091781405208167e-05,
+      "std": 1.000001311302185,
+      "min": -1.9821662902832031,
+      "max": 2.239436388015747
+    },
+    "navigation_speed": {
+      "mean": -1.1372566177669796e-06,
+      "std": 1.0000025033950806,
+      "min": -1.9245758056640625,
+      "max": 1.8495967388153076
+    },
+    "direction_changes": {
+      "mean": -8.910496944736224e-07,
+      "std": 0.9999996423721313,
+      "min": -1.106407642364502,
+      "max": 2.209562063217163
+    }
+  },
+  "paths": {
+    "X_train": "data/synthetic/X_train.npy",
+    "X_test": "data/synthetic/X_test.npy",
+    "y_train": "data/synthetic/y_train.npy",
+    "y_test": "data/synthetic/y_test.npy"
+  }
+}
