@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Behavioral Lens | Telemetry Dashboard</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "surface": "#0b1326",
+                        "on-tertiary-fixed-variant": "#622599",
+                        "on-tertiary": "#4a0080",
+                        "on-secondary-fixed-variant": "#5c4300",
+                        "inverse-on-surface": "#283044",
+                        "on-primary-container": "#73ea96",
+                        "inverse-surface": "#dae2fd",
+                        "on-primary-fixed": "#00210c",
+                        "on-secondary-container": "#6d5000",
+                        "primary-fixed-dim": "#66dd8b",
+                        "primary-fixed": "#83fba5",
+                        "secondary-fixed-dim": "#fbbc00",
+                        "outline-variant": "#454652",
+                        "surface-container-high": "#222a3d",
+                        "background": "#0b1326",
+                        "tertiary": "#ddb7ff",
+                        "on-surface-variant": "#c5c5d4",
+                        "surface-container": "#171f33",
+                        "error": "#ffb4ab",
+                        "on-background": "#dae2fd",
+                        "surface-bright": "#31394d",
+                        "secondary": "#ffe2ab",
+                        "on-tertiary-fixed": "#2c0050",
+                        "surface-container-low": "#131b2e",
+                        "on-secondary": "#402d00",
+                        "surface-container-highest": "#2d3449",
+                        "outline": "#8f909e",
+                        "secondary-container": "#ffbf00",
+                        "tertiary-container": "#773dae",
+                        "tertiary-fixed-dim": "#ddb7ff",
+                        "surface-tint": "#66dd8b",
+                        "surface-variant": "#2d3449",
+                        "primary-container": "#006933",
+                        "primary": "#66dd8b",
+                        "surface-container-lowest": "#060e20",
+                        "surface-dim": "#0b1326",
+                        "on-primary-fixed-variant": "#005227",
+                        "on-tertiary-container": "#e6c7ff",
+                        "error-container": "#93000a",
+                        "tertiary-fixed": "#f0dbff",
+                        "on-primary": "#003919",
+                        "secondary-fixed": "#ffdfa0",
+                        "on-secondary-fixed": "#261a00",
+                        "inverse-primary": "#006d36",
+                        "on-surface": "#dae2fd",
+                        "on-error": "#690005",
+                        "on-error-container": "#ffdad6"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "fontFamily": {
+                        "headline": ["Inter"],
+                        "body": ["Inter"],
+                        "label": ["Inter"]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        body { font-family: 'Inter', sans-serif; }
+        .glass-panel {
+            background: rgba(45, 52, 73, 0.6);
+            backdrop-filter: blur(12px);
+            border-top: 0.5px solid rgba(143, 144, 158, 0.2);
+            border-left: 0.5px solid rgba(143, 144, 158, 0.2);
+        }
+        .tabular-numbers { font-variant-numeric: tabular-nums; }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-surface text-on-surface min-h-screen overflow-x-hidden">
+<!-- TopAppBar -->
+<header class="fixed top-0 w-full z-50 bg-[#0b1326]/80 backdrop-blur-xl flex justify-between items-center px-6 h-16 w-full">
+<div class="flex items-center gap-4">
+<div class="text-xl font-bold tracking-tighter text-[#dae2fd]">Behavioral Lens</div>
+<div class="h-6 w-[1px] bg-[#131b2e]"></div>
+<div class="flex items-center gap-2">
+<span class="w-2 h-2 rounded-full bg-primary shadow-[0_0_8px_rgba(102,221,139,0.8)]"></span>
+<span class="text-[10px] font-bold uppercase tracking-widest text-primary">Connected</span>
+</div>
+</div>
+<div class="flex items-center gap-6">
+<div class="hidden md:flex gap-8 items-center text-[11px] font-bold uppercase tracking-widest">
+<a class="text-[#66dd8b]" href="#">Telemetry</a>
+<a class="text-[#c5c5d4] hover:text-[#dae2fd] transition-colors" href="#">Models</a>
+<a class="text-[#c5c5d4] hover:text-[#dae2fd] transition-colors" href="#">Anomalies</a>
+<a class="text-[#c5c5d4] hover:text-[#dae2fd] transition-colors" href="#">Settings</a>
+</div>
+<div class="w-8 h-8 rounded-full overflow-hidden border border-outline-variant/30">
+<img alt="User Profile" data-alt="high contrast studio portrait of a professional data scientist with soft blue ambient lighting on face" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAWou--3oJkvsnJZx4tluGJ6noKeZvY47euiZhSN0se70wXFLUlwNnQV_9usWmJFIypZ7IOWeNulqTSucwHloX4vPNp90uY4Pryb11yfN-KDO7KZcXZaa3osrs9x1v7WklS8B7XE2fGba83F-iDNS-43AoDY9Z6eb7-7_4kkR_0kpfJufRoxAy58MxwDTMtK7anEBXZBymRFOMTZ9JG8VNCn2u4nQahv9mdoiKBknb_H5FnfIMdBRht2-n270okBd7mWzs23n2qTUQ"/>
+</div>
+<span class="material-symbols-outlined text-[#66dd8b]">sensors</span>
+</div>
+</header>
+<!-- NavigationDrawer (Desktop Only) -->
+<aside class="hidden lg:flex h-full w-64 fixed left-0 top-0 bg-[#131b2e] flex-col py-8 px-4 z-40 shadow-[40px_0_40px_-20px_rgba(11,19,38,0.4)] mt-16">
+<div class="text-[#dae2fd] font-black mb-10 px-2">ML Console</div>
+<nav class="flex flex-col space-y-2">
+<a class="flex items-center gap-3 py-3 px-4 rounded-lg text-[#66dd8b] border-l-4 border-[#66dd8b] bg-gradient-to-r from-[#66dd8b]/10 to-transparent transition-all duration-300" href="#">
+<span class="material-symbols-outlined" data-icon="dashboard">dashboard</span>
+<span class="font-['Inter'] tabular-nums uppercase tracking-widest text-[11px]">Telemetry</span>
+</a>
+<a class="flex items-center gap-3 py-3 px-4 rounded-lg text-[#c5c5d4] opacity-70 hover:text-[#dae2fd] hover:bg-[#2d3449] transition-all duration-300" href="#">
+<span class="material-symbols-outlined" data-icon="Memory">memory</span>
+<span class="font-['Inter'] tabular-nums uppercase tracking-widest text-[11px]">Models</span>
+</a>
+<a class="flex items-center gap-3 py-3 px-4 rounded-lg text-[#c5c5d4] opacity-70 hover:text-[#dae2fd] hover:bg-[#2d3449] transition-all duration-300" href="#">
+<span class="material-symbols-outlined" data-icon="psychology_alt">psychology_alt</span>
+<span class="font-['Inter'] tabular-nums uppercase tracking-widest text-[11px]">Anomalies</span>
+</a>
+<a class="flex items-center gap-3 py-3 px-4 rounded-lg text-[#c5c5d4] opacity-70 hover:text-[#dae2fd] hover:bg-[#2d3449] transition-all duration-300" href="#">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+<span class="font-['Inter'] tabular-nums uppercase tracking-widest text-[11px]">Settings</span>
+</a>
+</nav>
+</aside>
+<main class="lg:pl-64 pt-24 pb-32 px-6 md:px-12 w-full">
+<!-- Dashboard Top Controls -->
+<div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-12">
+<div>
+<h1 class="text-3xl font-extrabold tracking-tight text-on-surface mb-1">Observation Canvas</h1>
+<p class="text-on-surface-variant text-sm font-medium">Real-time inference stream from behavioral clusters.</p>
+</div>
+<div class="flex items-center gap-4 bg-surface-container-low p-1.5 rounded-xl border border-white/5">
+<span class="text-[10px] font-bold uppercase tracking-tighter text-on-surface-variant px-3">Active Model:</span>
+<div class="relative group">
+<button class="bg-surface-container-highest px-4 py-2 rounded-lg flex items-center gap-3 text-sm font-bold text-on-surface hover:bg-surface-bright transition-colors">
+                        AMNP v4.2
+                        <span class="material-symbols-outlined text-sm">expand_more</span>
+</button>
+<div class="absolute right-0 top-full mt-2 w-48 glass-panel rounded-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50 p-2">
+<button class="w-full text-left px-3 py-2 text-xs font-bold hover:bg-white/5 rounded-md text-primary">AMNP v4.2 (Production)</button>
+<button class="w-full text-left px-3 py-2 text-xs font-bold hover:bg-white/5 rounded-md">NeuralNet Evolution</button>
+<button class="w-full text-left px-3 py-2 text-xs font-bold hover:bg-white/5 rounded-md">SVM Classical</button>
+</div>
+</div>
+</div>
+</div>
+<!-- Center: Main Hero State Card -->
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-8 mb-12">
+<div class="lg:col-span-8 glass-panel rounded-[2rem] p-8 md:p-12 relative overflow-hidden flex flex-col justify-center min-h-[400px]">
+<!-- Decorative Glow Background -->
+<div class="absolute -top-24 -right-24 w-64 h-64 bg-primary/20 blur-[100px] rounded-full"></div>
+<div class="absolute -bottom-24 -left-24 w-64 h-64 bg-tertiary/10 blur-[100px] rounded-full"></div>
+<div class="relative z-10">
+<div class="flex items-center gap-3 mb-6">
+<span class="bg-primary/10 text-primary px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest">System Inference</span>
+<span class="text-on-surface-variant text-[10px] font-medium uppercase tracking-widest">Last updated: 14ms ago</span>
+</div>
+<h2 class="text-on-surface-variant text-sm font-bold uppercase tracking-[0.2em] mb-2">Detected Behavioral State</h2>
+<div class="flex items-baseline gap-4 mb-8">
+<span class="text-7xl md:text-8xl font-black text-transparent bg-clip-text bg-gradient-to-br from-primary to-primary-container drop-shadow-[0_0_15px_rgba(102,221,139,0.3)]">Focused</span>
+<div class="flex flex-col">
+<span class="text-3xl font-bold tabular-numbers text-primary">98.7%</span>
+<span class="text-[10px] font-black text-on-surface-variant uppercase tracking-widest">Confidence</span>
+</div>
+</div>
+<!-- Progress Bar -->
+<div class="w-full h-4 bg-surface-container-lowest rounded-full overflow-hidden mb-12 flex">
+<div class="h-full bg-gradient-to-r from-primary to-primary-container shadow-[0_0_20px_rgba(102,221,139,0.4)]" style="width: 98.7%"></div>
+</div>
+<!-- Probability Readouts -->
+<div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+<div class="p-4 bg-white/5 rounded-2xl">
+<p class="text-[10px] font-black text-on-surface-variant uppercase tracking-widest mb-1">Analysis Mode</p>
+<div class="flex justify-between items-end">
+<span class="text-lg font-bold text-on-surface">Searching</span>
+<span class="text-sm font-medium tabular-numbers text-secondary">1.2%</span>
+</div>
+<div class="w-full h-1 bg-surface-container-lowest mt-2 rounded-full overflow-hidden">
+<div class="h-full bg-secondary" style="width: 1.2%"></div>
+</div>
+</div>
+<div class="p-4 bg-white/5 rounded-2xl">
+<p class="text-[10px] font-black text-on-surface-variant uppercase tracking-widest mb-1">Engagement</p>
+<div class="flex justify-between items-end">
+<span class="text-lg font-bold text-on-surface">Idle</span>
+<span class="text-sm font-medium tabular-numbers text-on-surface-variant">0.1%</span>
+</div>
+<div class="w-full h-1 bg-surface-container-lowest mt-2 rounded-full overflow-hidden">
+<div class="h-full bg-on-surface-variant" style="width: 0.1%"></div>
+</div>
+</div>
+<div class="p-4 bg-white/5 rounded-2xl border-l-4 border-tertiary">
+<p class="text-[10px] font-black text-on-surface-variant uppercase tracking-widest mb-1">Input Velocity</p>
+<div class="flex justify-between items-end">
+<span class="text-lg font-bold text-on-surface">Strained</span>
+<span class="text-sm font-medium tabular-numbers text-tertiary">Normal</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Asymmetric Side Data -->
+<div class="lg:col-span-4 flex flex-col gap-8">
+<div class="bg-surface-container-low rounded-[2rem] p-6 flex-1">
+<h3 class="text-xs font-black uppercase tracking-[0.2em] text-on-surface-variant mb-6">Neural Activation</h3>
+<div class="space-y-6">
+<div class="flex items-center gap-4">
+<div class="w-12 h-12 rounded-xl bg-surface-container-highest flex items-center justify-center">
+<span class="material-symbols-outlined text-primary">data_thresholding</span>
+</div>
+<div>
+<p class="text-xs font-bold text-on-surface-variant uppercase tracking-widest">Input Vector</p>
+<p class="text-lg font-bold text-on-surface tabular-numbers">0.00042 ms</p>
+</div>
+</div>
+<div class="flex items-center gap-4">
+<div class="w-12 h-12 rounded-xl bg-surface-container-highest flex items-center justify-center">
+<span class="material-symbols-outlined text-secondary">bolt</span>
+</div>
+<div>
+<p class="text-xs font-bold text-on-surface-variant uppercase tracking-widest">Entropy Level</p>
+<p class="text-lg font-bold text-on-surface tabular-numbers">Low (α=0.12)</p>
+</div>
+</div>
+</div>
+<div class="mt-8">
+<div class="w-full h-32 rounded-2xl overflow-hidden bg-surface-container-highest relative">
+<img alt="ML Visualization" class="w-full h-full object-cover opacity-50" data-alt="abstract digital visualization of moving neural network patterns with emerald and indigo lines on a dark background" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBUUptEWZz3POLtDQ5OEI_6zrQnzDeLOGd1r-PITO5Qh9uA3xZR6OPdHM4t5QAxZEhJxP99VktS_yPHYkIVvIaeEUjQ00IqzeTui7QJUJZzkgoAIq0qdw_fgbIk61m-bQve2N5fH1RGvq2k-rcX2eqozFigmJJSJ7T_aAxi12Eqv8cmQTAeGTLxPUGbWT9BCTjtqhJNSeH6ASBWSwNKLlRKkqftVVvqeNt00-3PnYI4vYz1w-RzLNIpUkdYSe5pddGNMvdBntNGb6E"/>
+<div class="absolute inset-0 bg-gradient-to-t from-surface-container-low to-transparent"></div>
+</div>
+</div>
+</div>
+<button class="w-full py-4 bg-gradient-to-br from-primary to-primary-container text-on-primary font-black uppercase tracking-widest rounded-2xl shadow-lg shadow-primary/10 active:scale-95 transition-all">
+                    Reset Model Calibration
+                </button>
+</div>
+</div>
+<!-- Bottom: Feature Importance & Telemetry -->
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+<!-- Horizontal Chart -->
+<div class="bg-surface-container-low rounded-[2rem] p-8">
+<div class="flex justify-between items-center mb-8">
+<h3 class="text-sm font-bold uppercase tracking-widest">Feature Weighting (Importance)</h3>
+<span class="material-symbols-outlined text-on-surface-variant">info</span>
+</div>
+<div class="space-y-6">
+<div class="space-y-2">
+<div class="flex justify-between text-[11px] font-black uppercase tracking-widest text-on-surface-variant">
+<span>Saccadic Patterns</span>
+<span class="tabular-numbers">0.82</span>
+</div>
+<div class="w-full h-2 bg-surface-container-lowest rounded-full overflow-hidden">
+<div class="h-full bg-primary" style="width: 82%"></div>
+</div>
+</div>
+<div class="space-y-2">
+<div class="flex justify-between text-[11px] font-black uppercase tracking-widest text-on-surface-variant">
+<span>Input Latency</span>
+<span class="tabular-numbers">0.54</span>
+</div>
+<div class="w-full h-2 bg-surface-container-lowest rounded-full overflow-hidden">
+<div class="h-full bg-tertiary" style="width: 54%"></div>
+</div>
+</div>
+<div class="space-y-2">
+<div class="flex justify-between text-[11px] font-black uppercase tracking-widest text-on-surface-variant">
+<span>Navigation Logic</span>
+<span class="tabular-numbers">0.41</span>
+</div>
+<div class="w-full h-2 bg-surface-container-lowest rounded-full overflow-hidden">
+<div class="h-full bg-secondary" style="width: 41%"></div>
+</div>
+</div>
+</div>
+</div>
+<!-- Telemetry Metrics -->
+<div class="bg-surface-container-low rounded-[2rem] p-8">
+<h3 class="text-sm font-bold uppercase tracking-widest mb-8">Raw Telemetry Stream</h3>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+<div class="flex flex-col gap-4">
+<div>
+<div class="flex justify-between mb-1">
+<span class="text-[10px] font-black text-on-surface-variant uppercase tracking-widest">Click Freq.</span>
+<span class="text-[10px] font-bold tabular-numbers">2.4/s</span>
+</div>
+<div class="w-full h-1 bg-surface-container-highest rounded-full">
+<div class="h-full bg-primary-container" style="width: 65%"></div>
+</div>
+</div>
+<div>
+<div class="flex justify-between mb-1">
+<span class="text-[10px] font-black text-on-surface-variant uppercase tracking-widest">Hesitation</span>
+<span class="text-[10px] font-bold tabular-numbers">120ms</span>
+</div>
+<div class="w-full h-1 bg-surface-container-highest rounded-full">
+<div class="h-full bg-secondary-container" style="width: 20%"></div>
+</div>
+</div>
+</div>
+<div class="flex flex-col gap-4">
+<div>
+<div class="flex justify-between mb-1">
+<span class="text-[10px] font-black text-on-surface-variant uppercase tracking-widest">Scroll Depth</span>
+<span class="text-[10px] font-bold tabular-numbers">78%</span>
+</div>
+<div class="w-full h-1 bg-surface-container-highest rounded-full">
+<div class="h-full bg-tertiary-container" style="width: 78%"></div>
+</div>
+</div>
+<div>
+<div class="flex justify-between mb-1">
+<span class="text-[10px] font-black text-on-surface-variant uppercase tracking-widest">Dir. Changes</span>
+<span class="text-[10px] font-bold tabular-numbers">High</span>
+</div>
+<div class="w-full h-1 bg-surface-container-highest rounded-full">
+<div class="h-full bg-error" style="width: 90%"></div>
+</div>
+</div>
+</div>
+</div>
+<div class="mt-10 pt-6 border-t border-white/5 flex justify-between items-center">
+<span class="text-[10px] font-bold uppercase text-on-surface-variant tracking-widest">Packet Integrity: 100%</span>
+<span class="text-[10px] font-bold uppercase text-primary tracking-widest flex items-center gap-1">
+<span class="material-symbols-outlined text-[12px]">check_circle</span> Optimized
+                    </span>
+</div>
+</div>
+</div>
+</main>
+<!-- BottomNavBar (Mobile Only) -->
+<nav class="md:hidden fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-4 pb-6 pt-3 bg-[#0b1326]/60 backdrop-blur-2xl rounded-t-2xl border-t border-white/10 shadow-2xl shadow-emerald-500/5">
+<a class="flex flex-col items-center justify-center text-[#66dd8b] bg-[#2d3449]/80 rounded-xl px-4 py-1 active:scale-90 transition-transform" href="#">
+<span class="material-symbols-outlined" data-icon="analytics">analytics</span>
+<span class="font-['Inter'] text-[10px] font-bold uppercase tracking-tighter">Live</span>
+</a>
+<a class="flex flex-col items-center justify-center text-[#c5c5d4] hover:bg-white/5 active:scale-90 transition-transform" href="#">
+<span class="material-symbols-outlined" data-icon="deployed_code">deployed_code</span>
+<span class="font-['Inter'] text-[10px] font-bold uppercase tracking-tighter">Models</span>
+</a>
+<a class="flex flex-col items-center justify-center text-[#c5c5d4] hover:bg-white/5 active:scale-90 transition-transform" href="#">
+<span class="material-symbols-outlined" data-icon="warning">warning</span>
+<span class="font-['Inter'] text-[10px] font-bold uppercase tracking-tighter">Alerts</span>
+</a>
+<a class="flex flex-col items-center justify-center text-[#c5c5d4] hover:bg-white/5 active:scale-90 transition-transform" href="#">
+<span class="material-symbols-outlined" data-icon="tune">tune</span>
+<span class="font-['Inter'] text-[10px] font-bold uppercase tracking-tighter">Config</span>
+</a>
+</nav>
+</body></html>

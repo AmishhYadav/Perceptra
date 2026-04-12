@@ -1,26 +1,13 @@
-/**
- * VisualPlayground — main container for the Visual tab.
- *
- * Layout:
- * ┌──────────┬──────────────────────────────┐
- * │ Controls │      Training Canvas         │
- * │ (left)   │      (center)                │
- * │          │                              │
- * │          ├──────────────────────────────┤
- * │          │    Accuracy Sparkline        │
- * └──────────┴──────────────────────────────┘
- */
 import { useEffect } from "react";
 import { TrainingCanvas } from "./TrainingCanvas";
 import { VisualControls } from "./VisualControls";
 import { useVisualizationStore } from "../store/useVisualizationStore";
+import { Activity } from "lucide-react";
 
 export function VisualPlayground() {
   const connect = useVisualizationStore((s) => s.connect);
   const disconnect = useVisualizationStore((s) => s.disconnect);
   const currentModel = useVisualizationStore((s) => s.currentModel);
-  const accuracyHistory = useVisualizationStore((s) => s.accuracyHistory);
-  const lossHistory = useVisualizationStore((s) => s.lossHistory);
   const playbackState = useVisualizationStore((s) => s.playbackState);
 
   // Auto-connect on mount
@@ -31,105 +18,46 @@ export function VisualPlayground() {
   }, []);
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
-      {/* Left: Controls */}
-      <div className="lg:col-span-3">
+    <div className="flex flex-col md:flex-row gap-6 w-full h-[calc(100vh-160px)] min-h-[600px] border border-outline-variant/15 rounded-2xl overflow-hidden bg-surface-container-lowest">
+      {/* Sidebar: Controls */}
+      <aside className="w-full md:w-80 bg-surface-container-low p-6 flex flex-col gap-6 overflow-y-auto shrink-0 md:border-r md:border-outline-variant/15">
         <VisualControls />
-      </div>
+      </aside>
 
-      {/* Center: Canvas + Sparklines */}
-      <div className="lg:col-span-9 space-y-4">
-        {/* Canvas */}
-        <div className="bg-surface-light/60 backdrop-blur-md rounded-2xl border border-white/5 p-4">
-          <div className="flex items-center justify-between mb-3">
-            <h2 className="text-sm font-semibold text-gray-200">
-              PCA Decision Space
-            </h2>
-            <div className="flex items-center gap-2">
-              {playbackState === "playing" && (
-                <span className="flex items-center gap-1.5 text-[10px] text-focused">
-                  <span className="inline-block w-1.5 h-1.5 rounded-full bg-focused animate-pulse" />
-                  Training...
-                </span>
-              )}
-              {playbackState === "complete" && (
-                <span className="text-[10px] text-accent">✓ Complete</span>
-              )}
-              {playbackState === "paused" && (
-                <span className="text-[10px] text-distracted">⏸ Paused</span>
-              )}
-            </div>
-          </div>
-          <TrainingCanvas width={800} height={560} />
-        </div>
+      {/* Canvas Area */}
+      <section className="flex-1 relative bg-surface-dim grid-overlay min-h-[400px] flex items-center justify-center overflow-hidden" style={{
+          backgroundImage: "radial-gradient(circle, rgba(69, 70, 82, 0.2) 1px, transparent 1px)",
+          backgroundSize: "24px 24px"
+      }}>
+         {/* Top Overlay Label */}
+         <div className="absolute top-6 left-6 flex flex-col gap-1 z-10">
+           <div className="flex items-center gap-2">
+              <h2 className="text-sm font-bold text-on-surface tracking-tight">Active Training Space</h2>
+              {playbackState === "playing" && <Activity size={14} className="text-primary animate-pulse" />}
+           </div>
+           <p className="text-[10px] text-on-surface-variant uppercase tracking-widest tabular-nums font-mono">PCA Transform</p>
+         </div>
 
-        {/* Accuracy & Loss sparklines */}
-        {accuracyHistory.length > 1 && (
-          <div className="grid grid-cols-2 gap-4">
-            <SparklineCard
-              title="Accuracy"
-              data={accuracyHistory}
-              color="#10b981"
-              format={(v) => `${(v * 100).toFixed(1)}%`}
-            />
-            <SparklineCard
-              title="Loss"
-              data={lossHistory}
-              color="#f59e0b"
-              format={(v) => v.toFixed(4)}
-            />
-          </div>
-        )}
-      </div>
-    </div>
-  );
-}
+         {/* Translucent Legend */}
+         <div className="absolute bottom-6 right-6 bg-[rgba(45,52,73,0.6)] backdrop-blur-xl border-t border-l border-outline-variant/20 rounded-xl p-4 flex flex-col gap-3 z-10">
+           <div className="flex items-center gap-3">
+             <div className="w-3 h-3 rounded-full bg-primary shadow-[0_0_8px_rgba(102,221,139,0.5)]"></div>
+             <span className="text-xs font-bold uppercase tracking-wider text-on-surface-variant">Class: Focused</span>
+           </div>
+           <div className="flex items-center gap-3">
+             <div className="w-3 h-3 rounded-full bg-secondary shadow-[0_0_8px_rgba(255,226,171,0.5)]"></div>
+             <span className="text-xs font-bold uppercase tracking-wider text-on-surface-variant">Class: Distracted</span>
+           </div>
+           <div className="flex items-center gap-3">
+             <div className="w-3 h-3 rounded-full bg-error shadow-[0_0_8px_rgba(255,180,171,0.5)]"></div>
+             <span className="text-xs font-bold uppercase tracking-wider text-on-surface-variant">Class: Confused</span>
+           </div>
+         </div>
 
-/* ── Tiny sparkline using canvas ── */
-function SparklineCard({
-  title,
-  data,
-  color,
-  format,
-}: {
-  title: string;
-  data: number[];
-  color: string;
-  format: (v: number) => string;
-}) {
-
-  return (
-    <div className="bg-surface-light/60 backdrop-blur-md rounded-xl border border-white/5 p-4">
-      <div className="flex items-center justify-between mb-2">
-        <span className="text-[10px] text-gray-500 uppercase tracking-wider">
-          {title}
-        </span>
-        <span className="text-sm font-bold" style={{ color }}>
-          {format(data[data.length - 1])}
-        </span>
-      </div>
-      <svg
-        viewBox={`0 0 ${data.length} 100`}
-        className="w-full h-8"
-        preserveAspectRatio="none"
-      >
-        <polyline
-          fill="none"
-          stroke={color}
-          strokeWidth="2"
-          strokeLinejoin="round"
-          strokeLinecap="round"
-          points={data
-            .map((v, i) => {
-              const min = Math.min(...data);
-              const max = Math.max(...data);
-              const range = max - min || 1;
-              const y = 95 - ((v - min) / range) * 90;
-              return `${i},${y}`;
-            })
-            .join(" ")}
-        />
-      </svg>
+         <div className="w-full h-full p-12">
+            <TrainingCanvas width={800} height={600} />
+         </div>
+      </section>
     </div>
   );
 }

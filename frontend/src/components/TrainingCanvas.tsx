@@ -61,21 +61,21 @@ export function TrainingCanvas({ width = 640, height = 520 }: Props) {
           const probs = grid.probabilities[idx];
           if (!probs) continue;
 
-          // Blend RGB from class probabilities
-          let r = 0,
-            g = 0,
-            b = 0;
-          for (let c = 0; c < 3; c++) {
-            r += probs[c] * CLASS_COLORS[c][0];
-            g += probs[c] * CLASS_COLORS[c][1];
-            b += probs[c] * CLASS_COLORS[c][2];
-          }
-
           // Confidence = max probability → controls opacity
           const confidence = Math.max(...probs);
-          const alpha = 0.15 + confidence * 0.45;
+          
+          // Use the dominant class color rather than linearly blending RGB (which turns Green+Red into Yellow/Distracted)
+          let dominantClass = 0;
+          for (let c = 1; c < 3; c++) {
+            if (probs[c] === confidence) {
+               dominantClass = c;
+            }
+          }
+          
+          const [r, g, b] = CLASS_COLORS[dominantClass];
+          const alpha = 0.1 + (confidence - (1/3)) * 0.8; // scale alpha based on how far above random guess (1/3) it is
 
-          ctx.fillStyle = `rgba(${Math.round(r)},${Math.round(g)},${Math.round(b)},${alpha})`;
+          ctx.fillStyle = `rgba(${r},${g},${b},${Math.max(0, alpha)})`;
           // Row is Y-inverted (row 0 = bottom of PCA space)
           const canvasY = height - (row + 1) * cellH;
           ctx.fillRect(col * cellW, canvasY, cellW + 0.5, cellH + 0.5);
@@ -100,17 +100,19 @@ export function TrainingCanvas({ width = 640, height = 520 }: Props) {
         const cy = toCanvasY(pt.y);
 
         // Determine point color
-        let colorIdx = pt.trueLabel;
-        if (showPred && preds.length > 0) {
-          colorIdx = preds[i] ?? pt.trueLabel;
+        let r = 100, g = 116, b = 139; // Neutral Slate
+        const hasPrediction = preds.length > i && preds[i] !== undefined;
+
+        if (showPred && hasPrediction) {
+           [r, g, b] = CLASS_COLORS[preds[i]];
         } else if (showTrue) {
-          colorIdx = pt.trueLabel;
+           [r, g, b] = CLASS_COLORS[pt.trueLabel];
         }
 
-        const [r, g, b] = CLASS_COLORS[colorIdx] || [128, 128, 128];
+        // Draw outer ring (true label) if showing both and it has a prediction
+        const drawRing = showTrue && showPred && hasPrediction;
 
-        // Draw outer ring (true label) if showing both
-        if (showTrue && showPred && preds.length > 0) {
+        if (drawRing) {
           ctx.beginPath();
           ctx.arc(cx, cy, 6, 0, Math.PI * 2);
           const [tr, tg, tb] = CLASS_COLORS[pt.trueLabel];
@@ -163,14 +165,28 @@ export function TrainingCanvas({ width = 640, height = 520 }: Props) {
       ctx.stroke();
     }
 
+    // Draw origin axes mathematically (x=0, y=0)
+    const originX = toCanvasX(0);
+    const originY = toCanvasY(0);
+    
+    ctx.strokeStyle = "rgba(255,255,255,0.15)";
+    ctx.lineWidth = 1.5;
+    if (originY >= 0 && originY <= height) {
+       ctx.beginPath(); ctx.moveTo(0, originY); ctx.lineTo(width, originY); ctx.stroke();
+    }
+    if (originX >= 0 && originX <= width) {
+       ctx.beginPath(); ctx.moveTo(originX, 0); ctx.lineTo(originX, height); ctx.stroke();
+    }
+
     // Axis labels
-    ctx.fillStyle = "rgba(255,255,255,0.25)";
-    ctx.font = "10px Inter, sans-serif";
-    ctx.fillText("PC1 →", width - 40, height - 8);
+    ctx.fillStyle = "rgba(255,255,255,0.6)";
+    ctx.font = "bold 13px Inter, sans-serif";
+    ctx.fillText("Principal Component X (PCA1)", width / 2 - 90, height - 16);
+    
     ctx.save();
-    ctx.translate(12, 40);
+    ctx.translate(24, height / 2 + 100);
     ctx.rotate(-Math.PI / 2);
-    ctx.fillText("PC2 →", 0, 0);
+    ctx.fillText("Principal Component Y (PCA2)", 0, 0);
     ctx.restore();
 
     // Draw boundary heatmap

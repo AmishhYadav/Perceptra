@@ -1,30 +1,30 @@
 import { useInferenceStore } from "../store/useInferenceStore";
-import { Focus, AlertTriangle, HelpCircle, Loader } from "lucide-react";
+import { Loader } from "lucide-react";
 
 const STATE_CONFIG = {
   focused: {
-    bg: "bg-emerald-500/10",
-    border: "border-emerald-500/30",
-    text: "text-emerald-400",
-    glow: "shadow-emerald-500/20",
-    icon: <Focus size={32} />,
     label: "Focused",
+    glow: "rgba(102,221,139,0.3)", // primary
+    bar: "from-primary to-primary-container shadow-[0_0_20px_rgba(102,221,139,0.4)]",
+    textClass: "text-transparent bg-clip-text bg-gradient-to-br from-primary to-primary-container",
+    valueClass: "text-primary",
+    bgAccent: "bg-primary"
   },
   distracted: {
-    bg: "bg-amber-500/10",
-    border: "border-amber-500/30",
-    text: "text-amber-400",
-    glow: "shadow-amber-500/20",
-    icon: <AlertTriangle size={32} />,
     label: "Distracted",
+    glow: "rgba(255,191,0,0.3)", // secondary container (amber)
+    bar: "from-secondary-container to-secondary shadow-[0_0_20px_rgba(255,191,0,0.4)]",
+    textClass: "text-transparent bg-clip-text bg-gradient-to-br from-secondary-container to-secondary",
+    valueClass: "text-secondary-container",
+    bgAccent: "bg-secondary-container"
   },
   confused: {
-    bg: "bg-red-500/10",
-    border: "border-red-500/30",
-    text: "text-red-400",
-    glow: "shadow-red-500/20",
-    icon: <HelpCircle size={32} />,
     label: "Confused",
+    glow: "rgba(255,180,171,0.3)", // error
+    bar: "from-error to-error-container shadow-[0_0_20px_rgba(255,180,171,0.4)]",
+    textClass: "text-transparent bg-clip-text bg-gradient-to-br from-error to-error-container",
+    valueClass: "text-error",
+    bgAccent: "bg-error"
   },
 };
 
@@ -34,11 +34,11 @@ export function PredictionCard() {
 
   if (connectionStatus !== "connected" || !prediction) {
     return (
-      <div className="rounded-2xl bg-surface-light/60 backdrop-blur-sm border border-white/5 p-6 flex flex-col items-center justify-center min-h-[200px]">
-        <Loader size={24} className="text-gray-500 animate-spin mb-3" />
-        <p className="text-sm text-gray-500">
+      <div className="rounded-[2rem] bg-[rgba(45,52,73,0.6)] backdrop-blur-xl border-t border-l border-outline-variant/20 p-8 md:p-12 relative flex flex-col items-center justify-center min-h-[400px]">
+        <Loader size={32} className="text-on-surface-variant animate-spin mb-4" />
+        <p className="text-sm font-bold uppercase tracking-widest text-on-surface-variant">
           {connectionStatus === "connected"
-            ? "Awaiting predictions…"
+            ? "Awaiting Telemetry Stream…"
             : "Connect to a model to begin"}
         </p>
       </div>
@@ -46,60 +46,76 @@ export function PredictionCard() {
   }
 
   const config = STATE_CONFIG[prediction.predicted_class];
-  const confidence = (prediction.confidence * 100).toFixed(1);
+  const confidencePercent = (prediction.confidence * 100).toFixed(1);
 
   return (
-    <div
-      className={`
-        rounded-2xl backdrop-blur-sm border p-6 transition-all duration-300
-        ${config.bg} ${config.border} shadow-lg ${config.glow}
-      `}
-    >
-      {/* Header */}
-      <div className="flex items-center justify-between mb-4">
-        <div className={`${config.text}`}>{config.icon}</div>
-        <span className="text-xs font-medium text-gray-500 uppercase tracking-wider">
-          {prediction.model_name}
-        </span>
-      </div>
-
-      {/* Main label */}
-      <h2 className={`text-3xl font-bold ${config.text} mb-1`}>
-        {config.label}
-      </h2>
-      <p className="text-gray-400 text-sm">Behavioral State</p>
-
-      {/* Confidence bar */}
-      <div className="mt-5">
-        <div className="flex justify-between text-xs mb-1.5">
-          <span className="text-gray-500">Confidence</span>
-          <span className={`font-mono font-semibold ${config.text}`}>
-            {confidence}%
+    <div className="rounded-[2rem] bg-[rgba(45,52,73,0.6)] backdrop-blur-xl border-t border-l border-outline-variant/20 p-8 md:p-12 relative overflow-hidden flex flex-col justify-center min-h-[400px]">
+      {/* Decorative Glow Background */}
+      <div className="absolute -top-24 -right-24 w-64 h-64 bg-primary/10 blur-[100px] rounded-full"></div>
+      <div className="absolute -bottom-24 -left-24 w-64 h-64 bg-tertiary/10 blur-[100px] rounded-full"></div>
+      
+      <div className="relative z-10">
+        <div className="flex items-center gap-3 mb-6">
+          <span className="bg-primary/10 text-primary px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest">
+            {prediction.model_name}
+          </span>
+          <span className="text-on-surface-variant text-[10px] font-medium uppercase tracking-widest">
+            Live Stream
           </span>
         </div>
-        <div className="h-2 rounded-full bg-surface-lighter overflow-hidden">
-          <div
-            className={`h-full rounded-full transition-all duration-200 ${config.text.replace("text-", "bg-")}`}
+        
+        <h2 className="text-on-surface-variant text-sm font-bold uppercase tracking-[0.2em] mb-2">
+          Detected Behavioral State
+        </h2>
+        
+        <div className="flex items-baseline gap-4 mb-8">
+          <span 
+            className={`text-6xl md:text-8xl font-black ${config.textClass}`}
+            style={{ filter: `drop-shadow(0 0 15px ${config.glow})` }}
+          >
+            {config.label}
+          </span>
+          <div className="flex flex-col ml-4">
+            <span className={`text-3xl font-bold tabular-nums ${config.valueClass}`}>
+              {confidencePercent}%
+            </span>
+            <span className="text-[10px] font-black text-on-surface-variant uppercase tracking-widest">
+              Confidence
+            </span>
+          </div>
+        </div>
+
+        {/* Confidence Progress Bar */}
+        <div className="w-full h-4 bg-surface-container-lowest rounded-full overflow-hidden mb-12 flex">
+          <div 
+            className={`h-full bg-gradient-to-r ${config.bar} transition-all duration-300`} 
             style={{ width: `${prediction.confidence * 100}%` }}
           />
         </div>
-      </div>
 
-      {/* Probability breakdown */}
-      <div className="mt-4 grid grid-cols-3 gap-2">
-        {Object.entries(prediction.probabilities).map(([cls, prob]) => {
-          const pConfig = STATE_CONFIG[cls as keyof typeof STATE_CONFIG];
-          return (
-            <div key={cls} className="text-center">
-              <div className={`text-lg font-bold font-mono ${pConfig.text}`}>
-                {(prob * 100).toFixed(0)}%
+        {/* Probability Readouts Layout */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {Object.entries(prediction.probabilities).map(([cls, prob]) => {
+            const pConfig = STATE_CONFIG[cls as keyof typeof STATE_CONFIG];
+            const probPercent = (prob * 100).toFixed(1);
+            return (
+              <div key={cls} className="p-4 bg-white/5 rounded-2xl border-l-4 border-transparent hover:border-surface-variant transition-colors" style={{ borderLeftColor: cls === prediction.predicted_class ? 'var(--color-primary)' : 'transparent' }}>
+                <p className="text-[10px] font-black text-on-surface-variant uppercase tracking-widest mb-1">
+                   {cls}
+                </p>
+                <div className="flex justify-between items-end">
+                  <span className="text-lg font-bold text-on-surface">Probability</span>
+                  <span className={`text-sm font-medium tabular-nums ${pConfig.valueClass}`}>
+                    {probPercent}%
+                  </span>
+                </div>
+                <div className="w-full h-1 bg-surface-container-lowest mt-2 rounded-full overflow-hidden">
+                  <div className={`h-full ${pConfig.bgAccent} transition-all duration-300`} style={{ width: `${prob * 100}%` }}></div>
+                </div>
               </div>
-              <div className="text-[10px] text-gray-500 uppercase">
-                {pConfig.label}
-              </div>
-            </div>
-          );
-        })}
+            );
+          })}
+        </div>
       </div>
     </div>
   );

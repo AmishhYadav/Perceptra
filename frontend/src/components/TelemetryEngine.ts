@@ -141,16 +141,16 @@ export class TelemetryEngine {
     const elapsed = Math.max((now - this.startTime) / 1000, 0.1);
     const windowStart = now - WINDOW_SEC * 1000;
 
-    // 1. Click frequency (clicks/sec in window, normalised: 5 cps = 1.0)
+    // 1. Click frequency (clicks/sec in window, normalised: 1.2 cps = 1.0)
     const recentClicks = this.clickTimes.filter((t) => t >= windowStart).length;
-    const clickFreq = Math.min(recentClicks / WINDOW_SEC / 5, 1);
+    const clickFreq = Math.min(recentClicks / WINDOW_SEC / 1.2, 1);
 
-    // 2. Hesitation time (avg reaction time, normalised: 2s → 1.0)
+    // 2. Hesitation time (avg reaction time, normalised: 3s → 1.0)
     const avgReaction =
       this.hitTimes.length > 0
         ? this.hitTimes.reduce((a, b) => a + b, 0) / this.hitTimes.length
-        : 1000;
-    const hesitation = Math.min(avgReaction / 2000, 1);
+        : 1500;
+    const hesitation = Math.min(avgReaction / 3000, 1);
 
     // 3. Misclick rate
     const misclickRate =
@@ -176,11 +176,11 @@ export class TelemetryEngine {
     // 7. Navigation speed (px/sec normalised: 1000px/s → 1.0)
     const navSpeed = this.computeNavSpeed(windowStart, now);
 
-    // 8. Direction changes per second (normalised: 10/sec → 1.0)
+    // 8. Direction changes per second (normalised: 5/sec → 1.0)
     const recentDirChanges = this.dirChanges.filter(
       (t) => t >= windowStart,
     ).length;
-    const dirChangeRate = Math.min(recentDirChanges / WINDOW_SEC / 10, 1);
+    const dirChangeRate = Math.min(recentDirChanges / WINDOW_SEC / 5, 1);
 
     return {
       click_frequency: clamp(clickFreq),
@@ -233,7 +233,7 @@ export class TelemetryEngine {
     }
     const duration = (now - windowStart) / 1000;
     const pxPerSec = duration > 0 ? totalDist / duration : 0;
-    return Math.min(pxPerSec / 1000, 1);
+    return Math.min(pxPerSec / 800, 1);
   }
 }
 

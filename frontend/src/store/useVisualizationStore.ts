@@ -104,7 +104,7 @@ export const useVisualizationStore = create<VisualizationState>((set, get) => ({
   speed: 80,
   viewMode: "single",
 
-  showTrueLabels: true,
+  showTrueLabels: false,
   showPredictions: true,
   showBoundary: true,
 

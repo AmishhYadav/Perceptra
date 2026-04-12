@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Focus Zone Assessment</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;800;900&amp;family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "surface-container-highest": "#2d3449",
+                    "primary-container": "#006933",
+                    "secondary-container": "#ffbf00",
+                    "on-primary-fixed": "#00210c",
+                    "error-container": "#93000a",
+                    "tertiary-fixed-dim": "#ddb7ff",
+                    "surface-container-high": "#222a3d",
+                    "tertiary-container": "#773dae",
+                    "secondary": "#ffe2ab",
+                    "on-secondary-container": "#6d5000",
+                    "on-tertiary-fixed": "#2c0050",
+                    "surface-container-low": "#131b2e",
+                    "on-primary-fixed-variant": "#005227",
+                    "on-error": "#690005",
+                    "on-background": "#dae2fd",
+                    "surface-bright": "#31394d",
+                    "on-primary": "#003919",
+                    "on-secondary-fixed-variant": "#5c4300",
+                    "tertiary-fixed": "#f0dbff",
+                    "outline": "#8f909e",
+                    "on-tertiary-fixed-variant": "#622599",
+                    "inverse-surface": "#dae2fd",
+                    "surface-container-lowest": "#060e20",
+                    "on-secondary-fixed": "#261a00",
+                    "surface": "#0b1326",
+                    "on-error-container": "#ffdad6",
+                    "error": "#ffb4ab",
+                    "outline-variant": "#454652",
+                    "inverse-primary": "#006d36",
+                    "surface-variant": "#2d3449",
+                    "on-secondary": "#402d00",
+                    "on-primary-container": "#73ea96",
+                    "primary-fixed": "#83fba5",
+                    "surface-dim": "#0b1326",
+                    "on-tertiary": "#4a0080",
+                    "on-surface": "#dae2fd",
+                    "secondary-fixed": "#ffdfa0",
+                    "tertiary": "#ddb7ff",
+                    "on-tertiary-container": "#e6c7ff",
+                    "on-surface-variant": "#c5c5d4",
+                    "primary-fixed-dim": "#66dd8b",
+                    "secondary-fixed-dim": "#fbbc00",
+                    "background": "#0b1326",
+                    "surface-tint": "#66dd8b",
+                    "primary": "#66dd8b",
+                    "surface-container": "#171f33",
+                    "inverse-on-surface": "#283044"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.125rem",
+                    "lg": "0.25rem",
+                    "xl": "0.5rem",
+                    "full": "0.75rem"
+            },
+            "fontFamily": {
+                    "headline": ["Inter"],
+                    "body": ["Inter"],
+                    "label": ["Inter"]
+            }
+          },
+        }
+      }
+    </script>
+<style>
+        .tabular-nums { font-variant-numeric: tabular-nums; }
+        .glass-panel {
+            background: rgba(45, 52, 73, 0.6);
+            backdrop-filter: blur(20px);
+            border-top: 0.5px solid rgba(143, 144, 158, 0.2);
+            border-left: 0.5px solid rgba(143, 144, 158, 0.2);
+        }
+        .bg-grid {
+            background-size: 40px 40px;
+            background-image: 
+                linear-gradient(to right, rgba(69, 70, 82, 0.1) 1px, transparent 1px),
+                linear-gradient(to bottom, rgba(69, 70, 82, 0.1) 1px, transparent 1px);
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-surface font-body text-on-surface min-h-screen flex flex-col overflow-hidden">
+<!-- TopAppBar -->
+<header class="bg-[#0b1326] dark:bg-slate-950 flex justify-between items-center px-6 py-4 w-full docked full-width top-0 z-40">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-[#66dd8b] dark:text-emerald-400" data-icon="psychology">psychology</span>
+<h1 class="font-['Inter'] font-bold tracking-tight text-sm uppercase text-[#dae2fd]">Focus Zone Assessment</h1>
+</div>
+<div class="flex items-center gap-4">
+<span class="material-symbols-outlined text-[#c5c5d4] dark:text-slate-400 hover:bg-[#2d3449] transition-colors duration-200 p-2 rounded-full cursor-pointer" data-icon="settings">settings</span>
+</div>
+</header>
+<div class="bg-[#131b2e] h-[1px] w-full"></div>
+<main class="flex-1 flex flex-col items-center px-6 py-8 max-w-7xl mx-auto w-full gap-8">
+<!-- Scoreboard -->
+<section class="w-full flex justify-between items-center gap-6">
+<div class="flex flex-col items-center flex-1 py-4 glass-panel rounded-xl shadow-[0_0_40px_rgba(102,221,139,0.1)]">
+<span class="text-on-surface-variant text-[10px] uppercase font-bold tracking-[0.2em] mb-1">Session Timer</span>
+<div class="text-6xl font-black text-primary tabular-nums tracking-tighter drop-shadow-[0_0_15px_rgba(102,221,139,0.4)]">14s</div>
+</div>
+<div class="flex flex-col items-center flex-1 py-4 glass-panel rounded-xl">
+<span class="text-on-surface-variant text-[10px] uppercase font-bold tracking-[0.2em] mb-1">Accumulated Score</span>
+<div class="text-6xl font-black text-on-surface tabular-nums tracking-tighter">185</div>
+</div>
+</section>
+<!-- Central Game Arena -->
+<section class="flex-1 w-full relative bg-surface-container-lowest rounded-2xl overflow-hidden shadow-inner border border-outline-variant/10">
+<div class="absolute inset-0 bg-grid"></div>
+<!-- Target Elements (Static Visualization) -->
+<div class="absolute inset-0 flex items-center justify-around px-20">
+<!-- Green Circle 1 -->
+<div class="relative w-32 h-32 flex items-center justify-center cursor-pointer group">
+<div class="absolute inset-0 bg-primary/20 rounded-full blur-xl group-hover:bg-primary/30 transition-all"></div>
+<div class="w-full h-full rounded-full border-2 border-primary/40 animate-pulse"></div>
+<div class="absolute w-20 h-20 rounded-full border border-primary/60"></div>
+<div class="absolute w-4 h-4 bg-primary rounded-full shadow-[0_0_15px_#66dd8b]"></div>
+</div>
+<!-- Green Circle 2 (Higher placement) -->
+<div class="relative w-24 h-24 flex items-center justify-center mb-40 cursor-pointer group">
+<div class="absolute inset-0 bg-primary/20 rounded-full blur-xl"></div>
+<div class="w-full h-full rounded-full border-2 border-primary/40"></div>
+<div class="absolute w-12 h-12 rounded-full border border-primary/60"></div>
+<div class="absolute w-3 h-3 bg-primary rounded-full shadow-[0_0_15px_#66dd8b]"></div>
+</div>
+<!-- Ruby Red Decoy -->
+<div class="relative w-28 h-28 flex items-center justify-center mt-32 cursor-pointer group">
+<div class="absolute inset-0 bg-error/20 rounded-full blur-xl"></div>
+<div class="w-full h-full rounded-full border-2 border-error/40"></div>
+<div class="absolute w-16 h-16 rounded-full border border-error/60"></div>
+<div class="absolute w-5 h-5 bg-error rounded-full shadow-[0_0_15px_#ffb4ab]"></div>
+</div>
+<!-- Green Circle 3 -->
+<div class="relative w-36 h-36 flex items-center justify-center cursor-pointer group">
+<div class="absolute inset-0 bg-primary/20 rounded-full blur-xl"></div>
+<div class="w-full h-full rounded-full border-2 border-primary/40 animate-pulse duration-700"></div>
+<div class="absolute w-24 h-24 rounded-full border border-primary/60"></div>
+<div class="absolute w-6 h-6 bg-primary rounded-full shadow-[0_0_15px_#66dd8b]"></div>
+</div>
+</div>
+<!-- Overlay Indicators -->
+<div class="absolute bottom-6 left-6 flex items-center gap-2 bg-surface/80 backdrop-blur-md px-3 py-1.5 rounded-full border border-outline-variant/20">
+<div class="w-2 h-2 bg-primary rounded-full animate-pulse"></div>
+<span class="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">Live Analytics Feed</span>
+</div>
+</section>
+<!-- Bottom Telemetry Strip -->
+<section class="w-full glass-panel rounded-xl p-6 mb-20">
+<div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-6">
+<!-- Metric 1 -->
+<div class="flex flex-col gap-2">
+<div class="flex justify-between items-baseline">
+<span class="text-[9px] font-bold text-on-surface-variant uppercase tracking-tighter">Click Freq</span>
+<span class="text-xs font-bold text-primary tabular-nums">0.8</span>
+</div>
+<div class="h-1 w-full bg-surface-container rounded-full overflow-hidden">
+<div class="h-full bg-primary w-[80%]"></div>
+</div>
+</div>
+<!-- Metric 2 -->
+<div class="flex flex-col gap-2">
+<div class="flex justify-between items-baseline">
+<span class="text-[9px] font-bold text-on-surface-variant uppercase tracking-tighter">Hesitation</span>
+<span class="text-xs font-bold text-primary tabular-nums">0.3s</span>
+</div>
+<div class="h-1 w-full bg-surface-container rounded-full overflow-hidden">
+<div class="h-full bg-primary w-[30%]"></div>
+</div>
+</div>
+<!-- Metric 3 -->
+<div class="flex flex-col gap-2">
+<div class="flex justify-between items-baseline">
+<span class="text-[9px] font-bold text-on-surface-variant uppercase tracking-tighter">Smoothness</span>
+<span class="text-xs font-bold text-primary tabular-nums">94%</span>
+</div>
+<div class="h-1 w-full bg-surface-container rounded-full overflow-hidden">
+<div class="h-full bg-primary w-[94%]"></div>
+</div>
+</div>
+<!-- Metric 4 -->
+<div class="flex flex-col gap-2">
+<div class="flex justify-between items-baseline">
+<span class="text-[9px] font-bold text-on-surface-variant uppercase tracking-tighter">Misclicks</span>
+<span class="text-xs font-bold text-error tabular-nums">2</span>
+</div>
+<div class="h-1 w-full bg-surface-container rounded-full overflow-hidden">
+<div class="h-full bg-error w-[20%]"></div>
+</div>
+</div>
+<!-- Metric 5 -->
+<div class="flex flex-col gap-2">
+<div class="flex justify-between items-baseline">
+<span class="text-[9px] font-bold text-on-surface-variant uppercase tracking-tighter">Latency</span>
+<span class="text-xs font-bold text-primary tabular-nums">45ms</span>
+</div>
+<div class="h-1 w-full bg-surface-container rounded-full overflow-hidden">
+<div class="h-full bg-primary w-[45%]"></div>
+</div>
+</div>
+<!-- Metric 6 -->
+<div class="flex flex-col gap-2">
+<div class="flex justify-between items-baseline">
+<span class="text-[9px] font-bold text-on-surface-variant uppercase tracking-tighter">Accuracy</span>
+<span class="text-xs font-bold text-primary tabular-nums">88%</span>
+</div>
+<div class="h-1 w-full bg-surface-container rounded-full overflow-hidden">
+<div class="h-full bg-primary w-[88%]"></div>
+</div>
+</div>
+<!-- Metric 7 -->
+<div class="flex flex-col gap-2">
+<div class="flex justify-between items-baseline">
+<span class="text-[9px] font-bold text-on-surface-variant uppercase tracking-tighter">Reaction</span>
+<span class="text-xs font-bold text-primary tabular-nums">220ms</span>
+</div>
+<div class="h-1 w-full bg-surface-container rounded-full overflow-hidden">
+<div class="h-full bg-primary w-[65%]"></div>
+</div>
+</div>
+<!-- Metric 8 -->
+<div class="flex flex-col gap-2">
+<div class="flex justify-between items-baseline">
+<span class="text-[9px] font-bold text-on-surface-variant uppercase tracking-tighter">Stability</span>
+<span class="text-xs font-bold text-primary tabular-nums">0.9</span>
+</div>
+<div class="h-1 w-full bg-surface-container rounded-full overflow-hidden">
+<div class="h-full bg-primary w-[90%]"></div>
+</div>
+</div>
+</div>
+</section>
+</main>
+<!-- BottomNavBar -->
+<nav class="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-4 py-3 pb-safe bg-[#0b1326]/80 backdrop-blur-xl dark:bg-slate-950/80 border-t border-[#454652]/15 shadow-[0_-4px_40px_rgba(19,27,46,0.4)]">
+<div class="flex flex-col items-center justify-center text-[#c5c5d4] px-3 py-1 hover:text-[#66dd8b] transition-all duration-300 group cursor-pointer">
+<span class="material-symbols-outlined mb-1 transition-transform group-active:scale-90" data-icon="exercise">exercise</span>
+<span class="font-['Inter'] text-[10px] font-medium tracking-wider uppercase">Training</span>
+</div>
+<div class="flex flex-col items-center justify-center text-[#c5c5d4] px-3 py-1 hover:text-[#66dd8b] transition-all duration-300 group cursor-pointer">
+<span class="material-symbols-outlined mb-1 transition-transform group-active:scale-90" data-icon="insights">insights</span>
+<span class="font-['Inter'] text-[10px] font-medium tracking-wider uppercase">Insights</span>
+</div>
+<div class="flex flex-col items-center justify-center bg-[#66dd8b]/10 text-[#66dd8b] rounded-xl px-3 py-1 cursor-pointer">
+<span class="material-symbols-outlined mb-1" data-icon="analytics">analytics</span>
+<span class="font-['Inter'] text-[10px] font-medium tracking-wider uppercase">Assessment</span>
+</div>
+<div class="flex flex-col items-center justify-center text-[#c5c5d4] px-3 py-1 hover:text-[#66dd8b] transition-all duration-300 group cursor-pointer">
+<span class="material-symbols-outlined mb-1 transition-transform group-active:scale-90" data-icon="query_stats">query_stats</span>
+<span class="font-['Inter'] text-[10px] font-medium tracking-wider uppercase">Patterns</span>
+</div>
+<div class="flex flex-col items-center justify-center text-[#c5c5d4] px-3 py-1 hover:text-[#66dd8b] transition-all duration-300 group cursor-pointer">
+<span class="material-symbols-outlined mb-1 transition-transform group-active:scale-90" data-icon="account_circle">account_circle</span>
+<span class="font-['Inter'] text-[10px] font-medium tracking-wider uppercase">Profile</span>
+</div>
+</nav>
+</body></html>

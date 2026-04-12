@@ -1,12 +1,5 @@
 /**
  * BehaviorAssessment — Interactive "Focus Zone" mini-game.
- *
- * A full-width interactive canvas area where colored targets spawn
- * at random positions. The user clicks targets while we passively
- * measure all 8 telemetry features via TelemetryEngine.
- *
- * The computed features stream to the model at 10Hz during gameplay,
- * giving real-time predictions without any manual slider input.
  */
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
@@ -14,26 +7,17 @@ import {
   type TelemetryInput,
 } from "../store/useInferenceStore";
 import { TelemetryEngine, type TelemetrySnapshot } from "./TelemetryEngine";
-import {
-  Play,
-  RotateCcw,
-  Target,
-  Timer,
-  Crosshair,
-  Zap,
-  MousePointerClick,
-  TrendingUp,
-} from "lucide-react";
+import { Play, RotateCcw, Target, Zap } from "lucide-react";
 
 /* ── Game constants ── */
 const GAME_DURATION_SEC = 20;
-const SPAWN_INTERVAL_MS = 1200; // new target every 1.2s
-const TARGET_LIFETIME_MS = 2800; // target disappears after 2.8s
-const MAX_TARGETS = 5; // max simultaneous targets
-const TARGET_RADIUS = 28;
-const GOOD_COLOR = "#10b981"; // emerald - click these
-const DECOY_COLOR = "#ef4444"; // red - avoid these
-const DECOY_CHANCE = 0.2; // 20% chance of decoy
+const SPAWN_INTERVAL_MS = 1200;
+const TARGET_LIFETIME_MS = 2800;
+const MAX_TARGETS = 5;
+const TARGET_RADIUS = 32;
+const GOOD_COLOR = "var(--color-primary)"; // #66dd8b
+const DECOY_COLOR = "var(--color-error)"; // #ffb4ab
+const DECOY_CHANCE = 0.2;
 
 interface GameTarget {
   id: number;
@@ -41,7 +25,6 @@ interface GameTarget {
   y: number;
   spawnTime: number;
   isDecoy: boolean;
-  radius: number;
   opacity: number;
 }
 
@@ -57,18 +40,15 @@ export function BehaviorAssessment() {
   const [score, setScore] = useState(0);
   const [hits, setHits] = useState(0);
   const [misses, setMisses] = useState(0);
-  const [lastSnapshot, setLastSnapshot] = useState<TelemetrySnapshot | null>(
-    null,
-  );
+  const [lastSnapshot, setLastSnapshot] = useState<TelemetrySnapshot | null>(null);
 
   const containerRef = useRef<HTMLDivElement>(null);
   const engineRef = useRef(new TelemetryEngine());
   const nextIdRef = useRef(0);
-  const spawnTimerRef = useRef<ReturnType<typeof setInterval>>();
-  const gameTimerRef = useRef<ReturnType<typeof setInterval>>();
-  const telemetryTimerRef = useRef<ReturnType<typeof setInterval>>();
-  const animFrameRef = useRef<number>();
-  const gameStartRef = useRef(0);
+  const spawnTimerRef = useRef<ReturnType<typeof setInterval> | undefined>(undefined);
+  const gameTimerRef = useRef<ReturnType<typeof setInterval> | undefined>(undefined);
+  const telemetryTimerRef = useRef<ReturnType<typeof setInterval> | undefined>(undefined);
+  const animFrameRef = useRef<number | undefined>(undefined);
 
   /* ── Cleanup on unmount ── */
   useEffect(() => {
@@ -76,7 +56,7 @@ export function BehaviorAssessment() {
       clearInterval(spawnTimerRef.current);
       clearInterval(gameTimerRef.current);
       clearInterval(telemetryTimerRef.current);
-      cancelAnimationFrame(animFrameRef.current!);
+      if (animFrameRef.current) cancelAnimationFrame(animFrameRef.current);
     };
   }, []);
 
@@ -94,7 +74,6 @@ export function BehaviorAssessment() {
     setHits(0);
     setMisses(0);
     setLastSnapshot(null);
-    gameStartRef.current = performance.now();
 
     // Spawn timer
     spawnTimerRef.current = setInterval(() => {
@@ -102,20 +81,14 @@ export function BehaviorAssessment() {
         if (prev.length >= MAX_TARGETS) return prev;
         const rect = containerRef.current?.getBoundingClientRect();
         if (!rect) return prev;
-        const pad = TARGET_RADIUS + 10;
+        const pad = TARGET_RADIUS + 20;
         const x = pad + Math.random() * (rect.width - 2 * pad);
         const y = pad + Math.random() * (rect.height - 2 * pad);
         const isDecoy = Math.random() < DECOY_CHANCE;
-        const newTarget: GameTarget = {
-          id: nextIdRef.current++,
-          x,
-          y,
-          spawnTime: performance.now(),
-          isDecoy,
-          radius: TARGET_RADIUS + (isDecoy ? -4 : 0),
-          opacity: 1,
-        };
-        return [...prev, newTarget];
+        return [
+          ...prev,
+          { id: nextIdRef.current++, x, y, spawnTime: performance.now(), isDecoy, opacity: 1 },
+        ];
       });
     }, SPAWN_INTERVAL_MS);
 
@@ -139,7 +112,7 @@ export function BehaviorAssessment() {
       }
     }, 100);
 
-    // Animation loop for target lifetime / opacity fade
+    // Fade animation loop
     const animate = () => {
       const now = performance.now();
       setTargets((prev) =>
@@ -147,7 +120,6 @@ export function BehaviorAssessment() {
           .map((t) => {
             const age = now - t.spawnTime;
             const life = TARGET_LIFETIME_MS;
-            // Fade in first 200ms, fade out last 400ms
             let opacity = 1;
             if (age < 200) opacity = age / 200;
             else if (age > life - 400) opacity = Math.max(0, (life - age) / 400);
@@ -165,11 +137,10 @@ export function BehaviorAssessment() {
     clearInterval(spawnTimerRef.current);
     clearInterval(gameTimerRef.current);
     clearInterval(telemetryTimerRef.current);
-    cancelAnimationFrame(animFrameRef.current!);
+    if (animFrameRef.current) cancelAnimationFrame(animFrameRef.current);
     setPhase("finished");
     setTargets([]);
 
-    // Send final telemetry burst
     const snap = engineRef.current.getSnapshot();
     setLastSnapshot(snap);
     if (connectionStatus === "connected") {
@@ -177,333 +148,225 @@ export function BehaviorAssessment() {
     }
   }, [connectionStatus, sendTelemetry]);
 
-  /* ── Handle clicks on targets ── */
-  const handleTargetClick = useCallback(
-    (target: GameTarget) => {
-      const reactionTime = performance.now() - target.spawnTime;
-      const engine = engineRef.current;
+  /* ── Input Handlers ── */
+  const handleTargetClick = useCallback((target: GameTarget) => {
+    const reactionTime = performance.now() - target.spawnTime;
+    const engine = engineRef.current;
+    if (target.isDecoy) {
+      engine.recordClick(false);
+      setMisses((p) => p + 1);
+      setScore((p) => Math.max(0, p - 15));
+    } else {
+      engine.recordClick(true, reactionTime);
+      setHits((p) => p + 1);
+      const bonus = Math.max(5, Math.round(50 - reactionTime / 50));
+      setScore((p) => p + bonus);
+    }
+    setTargets((prev) => prev.filter((t) => t.id !== target.id));
+  }, []);
 
-      if (target.isDecoy) {
-        // Clicked a decoy = miss
-        engine.recordClick(false);
-        setMisses((p) => p + 1);
-        setScore((p) => Math.max(0, p - 15));
-      } else {
-        // Hit!
-        engine.recordClick(true, reactionTime);
-        setHits((p) => p + 1);
-        // Score scales inversely with reaction time
-        const bonus = Math.max(5, Math.round(50 - reactionTime / 50));
-        setScore((p) => p + bonus);
-      }
+  const handleBackgroundClick = useCallback((e: React.MouseEvent) => {
+    if (phase !== "playing") return;
+    const target = (e.target as HTMLElement).closest("[data-target]");
+    if (!target) {
+      engineRef.current.recordClick(false);
+      setMisses((p) => p + 1);
+    }
+  }, [phase]);
 
-      // Remove the target
-      setTargets((prev) => prev.filter((t) => t.id !== target.id));
-    },
-    [],
-  );
+  const handleMouseMove = useCallback((e: React.MouseEvent) => {
+    if (phase !== "playing") return;
+    const rect = containerRef.current?.getBoundingClientRect();
+    if (!rect) return;
+    engineRef.current.recordMouseMove(e.clientX - rect.left, e.clientY - rect.top);
+  }, [phase]);
 
-  /* ── Handle background click (miss) ── */
-  const handleBackgroundClick = useCallback(
-    (e: React.MouseEvent) => {
-      if (phase !== "playing") return;
-      // Only count as miss if no target was hit (check target clicks handle themselves)
-      const target = (e.target as HTMLElement).closest("[data-target]");
-      if (!target) {
-        engineRef.current.recordClick(false);
-        setMisses((p) => p + 1);
-      }
-    },
-    [phase],
-  );
+  const handleWheel = useCallback((e: React.WheelEvent) => {
+    if (phase !== "playing") return;
+    engineRef.current.recordScroll(e.deltaY);
+  }, [phase]);
 
-  /* ── Mouse tracking ── */
-  const handleMouseMove = useCallback(
-    (e: React.MouseEvent) => {
-      if (phase !== "playing") return;
-      const rect = containerRef.current?.getBoundingClientRect();
-      if (!rect) return;
-      engineRef.current.recordMouseMove(
-        e.clientX - rect.left,
-        e.clientY - rect.top,
-      );
-    },
-    [phase],
-  );
-
-  /* ── Scroll tracking ── */
-  const handleWheel = useCallback(
-    (e: React.WheelEvent) => {
-      if (phase !== "playing") return;
-      engineRef.current.recordScroll(e.deltaY);
-    },
-    [phase],
-  );
-
-  /* ── Render ── */
   return (
-    <div className="space-y-4">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <Crosshair size={16} className="text-accent" />
-          <h3 className="text-xs font-semibold uppercase tracking-wider text-gray-400">
-            Focus Zone — Behavioral Assessment
-          </h3>
-        </div>
-        {phase === "playing" && (
-          <div className="flex items-center gap-2">
-            <Timer size={14} className="text-amber-400" />
-            <span className="text-sm font-mono font-bold text-amber-400">
-              {timeLeft}s
-            </span>
+    <div className="flex flex-col gap-6 w-full h-full">
+      {/* Top Scoreboard (Stitch styled) */}
+      <section className="w-full flex justify-between items-center gap-6">
+        <div className="flex flex-col items-center flex-1 py-4 bg-[rgba(45,52,73,0.6)] backdrop-blur-xl border-t border-l border-outline-variant/20 rounded-xl shadow-[0_0_40px_rgba(102,221,139,0.1)]">
+          <span className="text-on-surface-variant text-[10px] uppercase font-bold tracking-[0.2em] mb-1">
+            Session Timer
+          </span>
+          <div className="text-5xl md:text-6xl font-black text-primary tabular-nums tracking-tighter drop-shadow-[0_0_15px_rgba(102,221,139,0.4)]">
+            {timeLeft}s
           </div>
-        )}
-      </div>
+        </div>
+        <div className="flex flex-col items-center flex-1 py-4 bg-[rgba(45,52,73,0.6)] backdrop-blur-xl border-t border-l border-outline-variant/20 rounded-xl">
+          <span className="text-on-surface-variant text-[10px] uppercase font-bold tracking-[0.2em] mb-1">
+            Accumulated Score
+          </span>
+          <div className="text-5xl md:text-6xl font-black text-on-surface tabular-nums tracking-tighter">
+            {score}
+          </div>
+        </div>
+      </section>
 
-      {/* Game arena */}
-      <div
+      {/* Central Game Arena */}
+      <section
         ref={containerRef}
-        className="relative rounded-2xl border border-white/5 overflow-hidden select-none"
+        className="flex-1 w-full relative bg-surface-container-lowest rounded-2xl overflow-hidden shadow-inner border border-outline-variant/10 min-h-[420px]"
         style={{
-          height: 420,
-          background:
-            "radial-gradient(ellipse at center, rgba(129,140,248,0.03) 0%, rgba(17,24,39,0.95) 70%)",
           cursor: phase === "playing" ? "crosshair" : "default",
+          backgroundSize: "40px 40px",
+          backgroundImage: "linear-gradient(to right, rgba(69, 70, 82, 0.1) 1px, transparent 1px), linear-gradient(to bottom, rgba(69, 70, 82, 0.1) 1px, transparent 1px)"
         }}
         onClick={handleBackgroundClick}
         onMouseMove={handleMouseMove}
         onWheel={handleWheel}
       >
-        {/* Grid lines overlay */}
-        <div
-          className="absolute inset-0 pointer-events-none"
-          style={{
-            backgroundImage:
-              "linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px)",
-            backgroundSize: "40px 40px",
-          }}
-        />
-
-        {/* Idle state */}
+        {/* Idle UI */}
         {phase === "idle" && (
-          <div className="absolute inset-0 flex flex-col items-center justify-center gap-6">
+          <div className="absolute inset-0 flex flex-col items-center justify-center gap-6 bg-surface-container-lowest/80 backdrop-blur-sm z-10">
             <div className="relative">
-              <div className="h-20 w-20 rounded-full bg-accent/10 flex items-center justify-center animate-pulse">
-                <Target size={40} className="text-accent" />
+              <div className="h-24 w-24 rounded-full bg-primary/10 flex items-center justify-center animate-pulse">
+                <Target size={48} className="text-primary" />
               </div>
-              <div className="absolute -inset-3 rounded-full border border-accent/20 animate-ping" />
+              <div className="absolute -inset-4 rounded-full border border-primary/20 animate-ping duration-1000" />
             </div>
-            <div className="text-center max-w-md">
-              <h2 className="text-xl font-bold text-gray-100 mb-2">
+            <div className="text-center max-w-md px-6">
+              <h2 className="text-2xl font-bold text-on-surface mb-3 tracking-tight">
                 Focus Zone Assessment
               </h2>
-              <p className="text-sm text-gray-400 leading-relaxed">
-                Click the{" "}
-                <span className="text-emerald-400 font-semibold">
-                  green targets
-                </span>{" "}
-                as they appear. Avoid the{" "}
-                <span className="text-red-400 font-semibold">red decoys</span>.
-                We'll analyse your interaction patterns to determine your
-                cognitive state.
+              <p className="text-sm text-on-surface-variant leading-relaxed">
+                Click the <span className="text-primary font-bold">green targets</span> as they appear. 
+                Avoid the <span className="text-error font-bold">red decoys</span>. 
+                We'll analyze your interaction patterns to determine your cognitive state.
               </p>
             </div>
             <button
               onClick={startGame}
               disabled={connectionStatus !== "connected"}
-              className="flex items-center gap-2 px-6 py-3 rounded-xl bg-accent/20 text-accent
-                         font-semibold text-sm hover:bg-accent/30 transition-all cursor-pointer
-                         disabled:opacity-40 disabled:cursor-not-allowed border border-accent/20"
+              className="flex items-center gap-2 px-8 py-3 rounded-xl bg-gradient-to-r from-primary to-primary-container text-on-primary font-black uppercase tracking-widest hover:scale-105 active:scale-95 transition-all shadow-lg shadow-primary/20 disabled:opacity-50 disabled:grayscale"
             >
               <Play size={18} />
-              Start Assessment
+              Start Protocol
             </button>
             {connectionStatus !== "connected" && (
-              <p className="text-xs text-gray-500">
-                Connect to a model first…
+              <p className="text-xs text-on-surface-variant tracking-wider uppercase font-bold mt-2">
+                Awaiting connection...
               </p>
             )}
           </div>
         )}
 
-        {/* Playing — render targets */}
-        {phase === "playing" &&
-          targets.map((target) => (
-            <button
-              key={target.id}
-              data-target="true"
-              onMouseEnter={() => engineRef.current.recordHoverEnter()}
-              onMouseLeave={() => engineRef.current.recordHoverLeave()}
-              onClick={(e) => {
-                e.stopPropagation();
-                handleTargetClick(target);
-              }}
-              className="absolute rounded-full transition-transform active:scale-90 cursor-pointer"
-              style={{
-                left: target.x - target.radius,
-                top: target.y - target.radius,
-                width: target.radius * 2,
-                height: target.radius * 2,
-                opacity: target.opacity,
-                background: target.isDecoy
-                  ? `radial-gradient(circle, ${DECOY_COLOR}aa, ${DECOY_COLOR}44)`
-                  : `radial-gradient(circle, ${GOOD_COLOR}aa, ${GOOD_COLOR}44)`,
-                boxShadow: target.isDecoy
-                  ? `0 0 20px ${DECOY_COLOR}30, inset 0 0 10px ${DECOY_COLOR}20`
-                  : `0 0 20px ${GOOD_COLOR}30, inset 0 0 10px ${GOOD_COLOR}20`,
-                border: `2px solid ${target.isDecoy ? DECOY_COLOR : GOOD_COLOR}60`,
-                transform: `scale(${target.opacity > 0.5 ? 1 : 0.8})`,
-              }}
-            >
-              {/* Inner dot */}
-              <div
-                className="absolute rounded-full"
-                style={{
-                  top: "50%",
-                  left: "50%",
-                  transform: "translate(-50%, -50%)",
-                  width: 8,
-                  height: 8,
-                  background: target.isDecoy ? DECOY_COLOR : GOOD_COLOR,
-                }}
-              />
-            </button>
-          ))}
-
-        {/* Playing — live score */}
-        {phase === "playing" && (
-          <div className="absolute top-4 right-4 flex items-center gap-4">
-            <div className="bg-surface/80 backdrop-blur-md rounded-lg px-3 py-1.5 border border-white/5">
-              <span className="text-xs text-gray-400">Score </span>
-              <span className="text-sm font-mono font-bold text-accent">
-                {score}
-              </span>
-            </div>
-            <div className="bg-surface/80 backdrop-blur-md rounded-lg px-3 py-1.5 border border-white/5">
-              <span className="text-xs text-emerald-400">{hits}</span>
-              <span className="text-xs text-gray-500"> / </span>
-              <span className="text-xs text-red-400">{misses}</span>
-            </div>
-          </div>
-        )}
-
-        {/* Playing — progress bar */}
-        {phase === "playing" && (
-          <div className="absolute bottom-0 left-0 right-0 h-1 bg-surface-lighter/30">
-            <div
-              className="h-full bg-accent/60 transition-all duration-1000 ease-linear"
-              style={{
-                width: `${((GAME_DURATION_SEC - timeLeft) / GAME_DURATION_SEC) * 100}%`,
-              }}
-            />
-          </div>
-        )}
-
-        {/* Finished state */}
+        {/* Finished UI */}
         {phase === "finished" && (
-          <div className="absolute inset-0 flex flex-col items-center justify-center gap-5 bg-surface/60 backdrop-blur-sm">
-            <Zap size={36} className="text-accent" />
-            <h2 className="text-2xl font-bold text-gray-100">
+          <div className="absolute inset-0 flex flex-col items-center justify-center gap-6 bg-[rgba(11,19,38,0.85)] backdrop-blur-md z-10">
+            <Zap size={48} className="text-primary animate-bounce shadow-[0_0_30px_rgba(102,221,139,0.5)] rounded-full" />
+            <h2 className="text-3xl font-black text-on-surface tracking-tighter uppercase">
               Assessment Complete
             </h2>
-            <div className="grid grid-cols-3 gap-6 mt-2">
+            <div className="grid grid-cols-3 gap-10 mt-4 bg-surface-container-high/50 p-6 rounded-2xl border border-white/5">
               <div className="text-center">
-                <div className="text-2xl font-bold font-mono text-accent">
-                  {score}
-                </div>
-                <div className="text-[10px] text-gray-500 uppercase mt-1">
-                  Score
-                </div>
+                <div className="text-4xl font-black tabular-nums text-on-surface">{score}</div>
+                <div className="text-[10px] text-on-surface-variant uppercase font-bold tracking-widest mt-2">Total Score</div>
               </div>
               <div className="text-center">
-                <div className="text-2xl font-bold font-mono text-emerald-400">
-                  {hits}
-                </div>
-                <div className="text-[10px] text-gray-500 uppercase mt-1">
-                  Hits
-                </div>
+                <div className="text-4xl font-black tabular-nums text-primary">{hits}</div>
+                <div className="text-[10px] text-on-surface-variant uppercase font-bold tracking-widest mt-2">Target Hits</div>
               </div>
               <div className="text-center">
-                <div className="text-2xl font-bold font-mono text-red-400">
-                  {misses}
-                </div>
-                <div className="text-[10px] text-gray-500 uppercase mt-1">
-                  Misses
-                </div>
+                <div className="text-4xl font-black tabular-nums text-error">{misses}</div>
+                <div className="text-[10px] text-on-surface-variant uppercase font-bold tracking-widest mt-2">Decoy Misses</div>
               </div>
             </div>
             <button
               onClick={startGame}
-              className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-accent/20 text-accent
-                         font-semibold text-sm hover:bg-accent/30 transition-all cursor-pointer
-                         border border-accent/20 mt-2"
+              className="mt-6 flex items-center gap-2 px-6 py-3 rounded-xl bg-surface-container-highest text-on-surface hover:text-primary font-bold uppercase tracking-widest hover:bg-surface-bright active:scale-95 transition-all outline outline-1 outline-outline-variant/30"
             >
-              <RotateCcw size={16} />
-              Retry
+              <RotateCcw size={18} />
+              Recalibrate
             </button>
           </div>
         )}
-      </div>
 
-      {/* Live telemetry readout (compact) */}
-      {(phase === "playing" || phase === "finished") && lastSnapshot && (
-        <TelemetryReadout snapshot={lastSnapshot} />
-      )}
+        {/* Game Targets (Stitch styled) */}
+        {phase === "playing" && targets.map((target) => (
+          <button
+            key={target.id}
+            data-target="true"
+            onMouseEnter={() => engineRef.current.recordHoverEnter()}
+            onMouseLeave={() => engineRef.current.recordHoverLeave()}
+            onClick={(e) => {
+              e.stopPropagation();
+              handleTargetClick(target);
+            }}
+            className="absolute rounded-full transition-transform active:scale-90 flex items-center justify-center group"
+            style={{
+              left: target.x - TARGET_RADIUS,
+              top: target.y - TARGET_RADIUS,
+              width: TARGET_RADIUS * 2,
+              height: TARGET_RADIUS * 2,
+              opacity: target.opacity,
+            }}
+          >
+            {/* Soft Glow Underlay */}
+            <div className={`absolute inset-0 rounded-full blur-xl transition-all ${target.isDecoy ? 'bg-error/20' : 'bg-primary/20 group-hover:bg-primary/30'}`} />
+            
+            {/* Pulsing ring */}
+            <div className={`w-full h-full rounded-full border-2 ${target.isDecoy ? 'border-error/40' : 'border-primary/40 animate-[pulse_1s_ease-in-out_infinite]'}`} />
+            
+            {/* Inner bounding ring */}
+            <div className={`absolute rounded-full border ${target.isDecoy ? 'border-error/60' : 'border-primary/60'}`} style={{width: TARGET_RADIUS * 1.5, height: TARGET_RADIUS * 1.5}} />
+            
+            {/* Core dot */}
+            <div className={`absolute rounded-full shadow-[0_0_15px] ${target.isDecoy ? 'bg-error shadow-error' : 'bg-primary shadow-primary'}`} style={{width: target.isDecoy ? 12 : 8, height: target.isDecoy ? 12 : 8}} />
+          </button>
+        ))}
+
+        {/* Live Indicator Overlay */}
+        <div className="absolute bottom-6 left-6 flex items-center gap-2 bg-surface/80 backdrop-blur-md px-4 py-2 rounded-full border border-outline-variant/20 z-10 transition-opacity" style={{opacity: phase === 'playing' ? 1 : 0}}>
+          <div className="w-2 h-2 bg-primary rounded-full animate-[pulse_1s_ease-in-out_infinite]"></div>
+          <span className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">Live Analytics Feed</span>
+        </div>
+      </section>
+
+      {/* Bottom Telemetry Strip (Stitch styled 8-grid) */}
+      <section className="w-full bg-[rgba(45,52,73,0.6)] backdrop-blur-xl border-t border-l border-outline-variant/20 rounded-xl p-6 transition-all duration-300 min-h-[96px]">
+        {lastSnapshot ? (
+          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-6">
+            <TelemetryMetric label="Click Freq" value={lastSnapshot.click_frequency} suffix="/s" />
+            <TelemetryMetric label="Hesitation" value={lastSnapshot.hesitation_time} alertThreshold={0.7} />
+            <TelemetryMetric label="Smoothness" value={lastSnapshot.movement_smoothness} isPercent />
+            <TelemetryMetric label="Misclicks" value={lastSnapshot.misclick_rate} isPercent alertThreshold={0.5} />
+            <TelemetryMetric label="Dwell Time" value={lastSnapshot.dwell_time} />
+            <TelemetryMetric label="Scroll Depth" value={lastSnapshot.scroll_depth} isPercent />
+            <TelemetryMetric label="Nav Speed" value={lastSnapshot.navigation_speed} />
+            <TelemetryMetric label="Dir Changes" value={lastSnapshot.direction_changes} alertThreshold={0.7} />
+          </div>
+        ) : (
+          <div className="flex h-full items-center justify-center opacity-40 gap-3">
+             <Target size={16} className="text-on-surface-variant"/>
+             <span className="text-xs font-bold uppercase tracking-widest text-on-surface-variant">Telemetry Standing By</span>
+          </div>
+        )}
+      </section>
     </div>
   );
 }
 
-/* ── Compact telemetry meter strip ── */
-function TelemetryReadout({ snapshot }: { snapshot: TelemetrySnapshot }) {
-  const features: { key: keyof TelemetrySnapshot; label: string; icon: React.ReactNode }[] = [
-    { key: "click_frequency", label: "Click Freq", icon: <MousePointerClick size={12} /> },
-    { key: "hesitation_time", label: "Hesitation", icon: <Timer size={12} /> },
-    { key: "misclick_rate", label: "Misclicks", icon: <Target size={12} /> },
-    { key: "scroll_depth", label: "Scroll", icon: <TrendingUp size={12} /> },
-    { key: "movement_smoothness", label: "Smoothness", icon: <Zap size={12} /> },
-    { key: "dwell_time", label: "Dwell", icon: <Crosshair size={12} /> },
-    { key: "navigation_speed", label: "Speed", icon: <Play size={12} /> },
-    { key: "direction_changes", label: "Dir Chg", icon: <RotateCcw size={12} /> },
-  ];
-
+// Helper component for the Stitch Telemetry metrics
+function TelemetryMetric({ label, value, isPercent = false, suffix = "", alertThreshold = 1.0 }: { label: string, value: number, isPercent?: boolean, suffix?: string, alertThreshold?: number }) {
+  const isAlert = value >= alertThreshold;
+  const colorClass = isAlert ? "bg-error text-error shadow-error/40" : "bg-primary text-primary shadow-primary/40";
+  
   return (
-    <div className="rounded-2xl bg-surface-light/60 backdrop-blur-sm border border-white/5 p-4">
-      <div className="flex items-center gap-2 mb-3">
-        <Zap size={14} className="text-accent" />
-        <span className="text-[10px] font-semibold uppercase tracking-wider text-gray-400">
-          Live Telemetry
+    <div className="flex flex-col gap-2">
+      <div className="flex justify-between items-baseline gap-2">
+        <span className="text-[9px] font-bold text-on-surface-variant uppercase tracking-tighter truncate">{label}</span>
+        <span className={`text-xs font-bold tabular-nums ${isAlert ? 'text-error' : 'text-primary'}`}>
+          {isPercent ? `${(value * 100).toFixed(0)}%` : `${value.toFixed(2)}${suffix}`}
         </span>
       </div>
-      <div className="grid grid-cols-4 gap-x-4 gap-y-3">
-        {features.map(({ key, label, icon }) => {
-          const val = snapshot[key];
-          return (
-            <div key={key} className="group">
-              <div className="flex items-center gap-1.5 mb-1">
-                <span className="text-gray-500">{icon}</span>
-                <span className="text-[10px] text-gray-400">{label}</span>
-                <span className="ml-auto text-[10px] font-mono text-accent">
-                  {val.toFixed(2)}
-                </span>
-              </div>
-              <div className="h-1.5 rounded-full bg-surface-lighter overflow-hidden">
-                <div
-                  className="h-full rounded-full transition-all duration-200"
-                  style={{
-                    width: `${val * 100}%`,
-                    background:
-                      val > 0.7
-                        ? "#10b981"
-                        : val > 0.3
-                          ? "#818cf8"
-                          : "#6b7280",
-                  }}
-                />
-              </div>
-            </div>
-          );
-        })}
+      <div className="h-1 w-full bg-surface-container rounded-full overflow-hidden">
+        <div className={`h-full ${isAlert ? 'bg-error' : 'bg-primary'} transition-all duration-300`} style={{ width: `${value * 100}%` }}></div>
       </div>
     </div>
   );

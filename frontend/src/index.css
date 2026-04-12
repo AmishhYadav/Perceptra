@@ -4,15 +4,33 @@
   --color-focused: #10b981;
   --color-distracted: #f59e0b;
   --color-confused: #ef4444;
-  --color-surface: #111827;
-  --color-surface-light: #1f2937;
-  --color-surface-lighter: #374151;
-  --color-accent: #818cf8;
+
+  --color-surface: #0b1326;
+  --color-on-surface: #dae2fd;
+  --color-on-surface-variant: #c5c5d4;
+  --color-surface-container: #171f33;
+  --color-surface-container-low: #131b2e;
+  --color-surface-container-lowest: #060e20;
+  --color-surface-container-high: #222a3d;
+  --color-surface-container-highest: #2d3449;
+  
+  --color-primary: #66dd8b;
+  --color-primary-container: #006933;
+  --color-on-primary: #003919;
+  
+  --color-secondary: #ffe2ab;
+  --color-secondary-container: #ffbf00;
+  
+  --color-tertiary: #ddb7ff;
+  --color-tertiary-container: #773dae;
+  
+  --color-error: #ffb4ab;
+
   --font-sans: "Inter", system-ui, -apple-system, sans-serif;
 }
 
 @layer base {
   body {
-    @apply bg-surface text-gray-100 font-sans antialiased;
+    @apply bg-surface text-on-surface font-sans antialiased min-h-screen overflow-x-hidden;
   }
 }

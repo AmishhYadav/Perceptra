@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "surface-container-lowest": "#060e20",
+                    "background": "#0b1326",
+                    "secondary": "#ffe2ab",
+                    "error": "#ffb4ab",
+                    "tertiary-fixed": "#f0dbff",
+                    "tertiary-container": "#773dae",
+                    "primary-container": "#006933",
+                    "surface-tint": "#66dd8b",
+                    "on-secondary-fixed": "#261a00",
+                    "on-primary": "#003919",
+                    "primary-fixed-dim": "#66dd8b",
+                    "on-tertiary-container": "#e6c7ff",
+                    "inverse-surface": "#dae2fd",
+                    "secondary-container": "#ffbf00",
+                    "tertiary": "#ddb7ff",
+                    "on-secondary-container": "#6d5000",
+                    "on-surface": "#dae2fd",
+                    "on-error": "#690005",
+                    "on-tertiary-fixed": "#2c0050",
+                    "primary": "#66dd8b",
+                    "surface-variant": "#2d3449",
+                    "surface-container-highest": "#2d3449",
+                    "on-secondary-fixed-variant": "#5c4300",
+                    "inverse-primary": "#006d36",
+                    "secondary-fixed": "#ffdfa0",
+                    "surface-dim": "#0b1326",
+                    "on-tertiary": "#4a0080",
+                    "on-surface-variant": "#c5c5d4",
+                    "primary-fixed": "#83fba5",
+                    "on-error-container": "#ffdad6",
+                    "on-primary-fixed-variant": "#005227",
+                    "surface-container-high": "#222a3d",
+                    "on-primary-container": "#73ea96",
+                    "outline": "#8f909e",
+                    "surface-container": "#171f33",
+                    "surface": "#0b1326",
+                    "on-background": "#dae2fd",
+                    "outline-variant": "#454652",
+                    "error-container": "#93000a",
+                    "on-primary-fixed": "#00210c",
+                    "tertiary-fixed-dim": "#ddb7ff",
+                    "on-tertiary-fixed-variant": "#622599",
+                    "surface-bright": "#31394d",
+                    "secondary-fixed-dim": "#fbbc00",
+                    "inverse-on-surface": "#283044",
+                    "on-secondary": "#402d00",
+                    "surface-container-low": "#131b2e"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.125rem",
+                    "lg": "0.25rem",
+                    "xl": "0.5rem",
+                    "full": "0.75rem"
+            },
+            "fontFamily": {
+                    "headline": ["Inter"],
+                    "body": ["Inter"],
+                    "label": ["Inter"]
+            }
+          },
+        }
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .tabular-nums { font-variant-numeric: tabular-nums; }
+        .glass-panel {
+            background: rgba(45, 52, 73, 0.6);
+            backdrop-filter: blur(12px);
+            border-top: 0.5px solid rgba(143, 144, 158, 0.2);
+            border-left: 0.5px solid rgba(143, 144, 158, 0.2);
+        }
+        .grid-overlay {
+            background-image: radial-gradient(circle, rgba(69, 70, 82, 0.2) 1px, transparent 1px);
+            background-size: 24px 24px;
+        }
+        .decision-boundary {
+            background: radial-gradient(circle at 30% 40%, rgba(102, 221, 139, 0.15) 0%, transparent 40%),
+                        radial-gradient(circle at 70% 60%, rgba(255, 180, 171, 0.1) 0%, transparent 35%),
+                        radial-gradient(circle at 50% 80%, rgba(255, 226, 171, 0.1) 0%, transparent 30%);
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-surface font-body selection:bg-primary/30 min-h-screen flex flex-col">
+<!-- TopAppBar -->
+<header class="fixed top-0 w-full z-50 bg-[#0b1326] flex justify-between items-center px-6 h-16 w-full">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-[#66dd8b]" data-icon="insights">insights</span>
+<h1 class="text-lg font-bold tracking-tighter text-[#66dd8b]">Behavioral Intelligence</h1>
+</div>
+<div class="flex items-center gap-4">
+<span class="material-symbols-outlined text-[#c5c5d4] hover:bg-[#2d3449]/50 transition-colors p-2 rounded-full cursor-pointer" data-icon="account_circle">account_circle</span>
+</div>
+</header>
+<!-- Main Content Area: Visual Training Playground -->
+<main class="flex-1 mt-16 mb-20 overflow-hidden flex flex-col md:flex-row">
+<!-- Controls Sidebar (Scrollable on Mobile) -->
+<aside class="w-full md:w-80 bg-surface-container-low p-6 flex flex-col gap-6 overflow-y-auto shrink-0 md:border-r md:border-outline-variant/15">
+<!-- Model Comparison Toggle -->
+<div>
+<label class="text-[10px] uppercase tracking-[0.05em] font-medium text-on-surface-variant mb-3 block">Model Architecture</label>
+<div class="grid grid-cols-2 gap-2">
+<button class="glass-panel text-primary text-xs py-2 px-3 rounded-xl border-primary/40 bg-primary/10 transition-all duration-200 active:scale-95">AMNP</button>
+<button class="glass-panel text-on-surface-variant text-xs py-2 px-3 rounded-xl hover:bg-surface-variant transition-all duration-200 active:scale-95">Perceptron</button>
+<button class="glass-panel text-on-surface-variant text-xs py-2 px-3 rounded-xl hover:bg-surface-variant transition-all duration-200 active:scale-95">Neural Net</button>
+<button class="glass-panel text-on-surface-variant text-xs py-2 px-3 rounded-xl hover:bg-surface-variant transition-all duration-200 active:scale-95">SVM</button>
+</div>
+</div>
+<!-- Playback Controls -->
+<div class="glass-panel rounded-full p-2 flex justify-around items-center">
+<button class="p-2 text-on-surface-variant hover:text-primary transition-colors">
+<span class="material-symbols-outlined" data-icon="skip_previous">skip_previous</span>
+</button>
+<button class="w-12 h-12 bg-gradient-to-br from-primary to-primary-container text-on-primary rounded-full flex items-center justify-center shadow-lg active:scale-95 transition-transform">
+<span class="material-symbols-outlined" data-icon="play_arrow" style="font-variation-settings: 'FILL' 1;">play_arrow</span>
+</button>
+<button class="p-2 text-on-surface-variant hover:text-primary transition-colors">
+<span class="material-symbols-outlined" data-icon="step_over">step_over</span>
+</button>
+</div>
+<!-- Playback Speed Slider -->
+<div>
+<div class="flex justify-between items-center mb-2">
+<label class="text-[10px] uppercase tracking-[0.05em] font-medium text-on-surface-variant">Training Speed</label>
+<span class="text-[10px] tabular-nums text-primary">2.5x</span>
+</div>
+<div class="relative w-full h-1.5 bg-surface-container-highest rounded-full overflow-hidden">
+<div class="absolute top-0 left-0 h-full w-2/3 bg-primary shadow-[0_0_8px_rgba(102,221,139,0.5)]"></div>
+</div>
+</div>
+<!-- Live Stats Box -->
+<div class="bg-surface-container-highest rounded-xl p-4 flex flex-col gap-3">
+<div class="flex justify-between items-center">
+<span class="text-[10px] uppercase tracking-[0.05em] font-medium text-on-surface-variant">Epoch</span>
+<span class="text-sm font-mono tabular-nums text-on-surface font-semibold tracking-tight">45 <span class="text-on-surface-variant">/ 100</span></span>
+</div>
+<div class="flex justify-between items-center">
+<span class="text-[10px] uppercase tracking-[0.05em] font-medium text-on-surface-variant">Accuracy</span>
+<span class="text-sm font-mono tabular-nums text-primary font-semibold tracking-tight">98.6%</span>
+</div>
+<div class="flex justify-between items-center">
+<span class="text-[10px] uppercase tracking-[0.05em] font-medium text-on-surface-variant">Loss Rate</span>
+<span class="text-sm font-mono tabular-nums text-error font-semibold tracking-tight">0.024</span>
+</div>
+</div>
+<!-- Recommendation Tip (Insight Card) -->
+<div class="glass-panel border-l-4 border-primary rounded-xl p-4">
+<div class="flex items-start gap-3">
+<span class="material-symbols-outlined text-primary text-sm" data-icon="lightbulb">lightbulb</span>
+<p class="text-xs leading-relaxed text-on-surface-variant">Model convergence detected. Recommend shifting learning rate for the next 20 epochs.</p>
+</div>
+</div>
+</aside>
+<!-- Visualization Canvas -->
+<section class="flex-1 relative bg-background grid-overlay min-h-[400px]">
+<!-- Decision Boundary Heatmap Container -->
+<div class="absolute inset-0 decision-boundary"></div>
+<!-- Scatter Plot Layer (Simulated Dots) -->
+<div class="absolute inset-0 p-12 pointer-events-none">
+<!-- Data Points (Emerald/Positive) -->
+<div class="absolute top-[20%] left-[30%] w-2 h-2 rounded-full bg-primary shadow-[0_0_10px_#66dd8b]"></div>
+<div class="absolute top-[25%] left-[35%] w-2 h-2 rounded-full bg-primary shadow-[0_0_10px_#66dd8b]"></div>
+<div class="absolute top-[18%] left-[45%] w-2 h-2 rounded-full bg-primary shadow-[0_0_10px_#66dd8b]"></div>
+<!-- Data Points (Amber/At-Risk) -->
+<div class="absolute top-[60%] left-[50%] w-2 h-2 rounded-full bg-secondary shadow-[0_0_10px_#ffe2ab]"></div>
+<div class="absolute top-[65%] left-[55%] w-2 h-2 rounded-full bg-secondary shadow-[0_0_10px_#ffe2ab]"></div>
+<!-- Data Points (Red/Critical) -->
+<div class="absolute top-[80%] left-[20%] w-2 h-2 rounded-full bg-error shadow-[0_0_10px_#ffb4ab]"></div>
+<div class="absolute top-[75%] left-[25%] w-2 h-2 rounded-full bg-error shadow-[0_0_10px_#ffb4ab]"></div>
+<div class="absolute top-[85%] left-[15%] w-2 h-2 rounded-full bg-error shadow-[0_0_10px_#ffb4ab]"></div>
+</div>
+<!-- Translucent Legend -->
+<div class="absolute bottom-6 right-6 glass-panel rounded-xl p-3 flex flex-col gap-2 z-10">
+<div class="flex items-center gap-2">
+<div class="w-2 h-2 rounded-full bg-primary"></div>
+<span class="text-[10px] font-medium text-on-surface-variant">Class: Optimal</span>
+</div>
+<div class="flex items-center gap-2">
+<div class="w-2 h-2 rounded-full bg-secondary"></div>
+<span class="text-[10px] font-medium text-on-surface-variant">Class: Divergent</span>
+</div>
+<div class="flex items-center gap-2">
+<div class="w-2 h-2 rounded-full bg-error"></div>
+<span class="text-[10px] font-medium text-on-surface-variant">Class: Anomalous</span>
+</div>
+</div>
+<!-- Top Overlay Label -->
+<div class="absolute top-6 left-6 flex flex-col gap-1">
+<h2 class="text-sm font-bold text-on-surface tracking-tight">Active Training Space</h2>
+<p class="text-[10px] text-on-surface-variant uppercase tracking-widest tabular-nums">LAT: 12.04 / LON: -0.342</p>
+</div>
+</section>
+</main>
+<!-- BottomNavBar -->
+<nav class="fixed bottom-0 left-0 w-full flex justify-around items-center h-20 px-4 pb-safe bg-[#0b1326]/80 backdrop-blur-xl z-50 border-t border-[#454652]/15 shadow-[0_-4px_20px_rgba(11,19,38,0.4)]">
+<!-- Playground (Active) -->
+<a class="flex flex-col items-center justify-center bg-[#66dd8b]/10 text-[#66dd8b] rounded-xl px-3 py-1 active:scale-90 duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="science" style="font-variation-settings: 'FILL' 1;">science</span>
+<span class="font-['Inter'] text-[10px] uppercase tracking-[0.05em] font-medium">Playground</span>
+</a>
+<!-- Assessment -->
+<a class="flex flex-col items-center justify-center text-[#c5c5d4] hover:text-[#66dd8b] transition-all active:scale-90 duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="assignment_turned_in">assignment_turned_in</span>
+<span class="font-['Inter'] text-[10px] uppercase tracking-[0.05em] font-medium">Assessment</span>
+</a>
+<!-- Dashboard -->
+<a class="flex flex-col items-center justify-center text-[#c5c5d4] hover:text-[#66dd8b] transition-all active:scale-90 duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="analytics">analytics</span>
+<span class="font-['Inter'] text-[10px] uppercase tracking-[0.05em] font-medium">Dashboard</span>
+</a>
+<!-- Logs -->
+<a class="flex flex-col items-center justify-center text-[#c5c5d4] hover:text-[#66dd8b] transition-all active:scale-90 duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="database">database</span>
+<span class="font-['Inter'] text-[10px] uppercase tracking-[0.05em] font-medium">Logs</span>
+</a>
+</nav>
+<!-- Contextual FAB (Hidden as per requirement for "focused" screens if applicable, but Playground is a hub, so we keep it for "New Simulation") -->
+<div class="fixed bottom-24 right-6 z-40">
+<button class="w-14 h-14 bg-gradient-to-br from-primary to-primary-container text-on-primary rounded-full shadow-2xl flex items-center justify-center active:scale-90 transition-transform">
+<span class="material-symbols-outlined" data-icon="add" style="font-variation-settings: 'FILL' 1;">add</span>
+</button>
+</div>
+</body></html>

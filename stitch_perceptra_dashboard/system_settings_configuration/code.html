@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>System Settings &amp; Configuration</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "primary-container": "#006933",
+                        "surface-bright": "#31394d",
+                        "on-error": "#690005",
+                        "on-error-container": "#ffdad6",
+                        "on-secondary": "#402d00",
+                        "on-primary-fixed": "#00210c",
+                        "secondary-container": "#ffbf00",
+                        "surface-container-highest": "#2d3449",
+                        "secondary": "#ffe2ab",
+                        "error": "#ffb4ab",
+                        "inverse-primary": "#006d36",
+                        "primary-fixed-dim": "#66dd8b",
+                        "outline-variant": "#454652",
+                        "on-primary": "#003919",
+                        "tertiary-fixed-dim": "#ddb7ff",
+                        "surface-container-low": "#131b2e",
+                        "secondary-fixed-dim": "#fbbc00",
+                        "inverse-on-surface": "#283044",
+                        "on-primary-container": "#73ea96",
+                        "outline": "#8f909e",
+                        "tertiary-fixed": "#f0dbff",
+                        "surface-dim": "#0b1326",
+                        "on-tertiary-container": "#e6c7ff",
+                        "surface-container": "#171f33",
+                        "primary": "#66dd8b",
+                        "surface-tint": "#66dd8b",
+                        "on-tertiary": "#4a0080",
+                        "secondary-fixed": "#ffdfa0",
+                        "on-secondary-fixed-variant": "#5c4300",
+                        "surface-container-lowest": "#060e20",
+                        "background": "#0b1326",
+                        "tertiary": "#ddb7ff",
+                        "on-secondary-fixed": "#261a00",
+                        "inverse-surface": "#dae2fd",
+                        "tertiary-container": "#773dae",
+                        "surface-variant": "#2d3449",
+                        "on-primary-fixed-variant": "#005227",
+                        "on-tertiary-fixed": "#2c0050",
+                        "on-tertiary-fixed-variant": "#622599",
+                        "surface": "#0b1326",
+                        "on-secondary-container": "#6d5000",
+                        "on-surface-variant": "#c5c5d4",
+                        "surface-container-high": "#222a3d",
+                        "on-surface": "#dae2fd",
+                        "error-container": "#93000a",
+                        "primary-fixed": "#83fba5",
+                        "on-background": "#dae2fd"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "fontFamily": {
+                        "headline": ["Inter"],
+                        "body": ["Inter"],
+                        "label": ["Inter"]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .glass-panel {
+            background: rgba(45, 52, 73, 0.6);
+            backdrop-filter: blur(16px);
+            border: 0.5px solid rgba(143, 144, 158, 0.15);
+        }
+        .inner-glow {
+            box-shadow: inset 0.5px 0.5px 0px rgba(143, 144, 158, 0.2);
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-surface font-body selection:bg-primary/30 min-h-screen flex flex-col">
+<!-- TopAppBar -->
+<header class="bg-[#0b1326] dark:bg-[#0b1326] docked full-width top-0 sticky z-50 flex justify-between items-center px-6 h-16 w-full">
+<div class="flex items-center gap-4">
+<span class="material-symbols-outlined text-[#66dd8b] dark:text-[#66dd8b]">settings</span>
+<h1 class="text-lg font-bold tracking-tight text-[#dae2fd] font-['Inter'] tabular-nums uppercase">Settings</h1>
+</div>
+<div class="flex items-center gap-6">
+<button class="bg-gradient-to-br from-tertiary-container to-[#4a0080] text-on-tertiary-container px-6 py-2 rounded-lg font-semibold text-sm shadow-[0_0_20px_rgba(119,61,174,0.3)] hover:brightness-110 active:scale-95 transition-all">
+                Save Changes
+            </button>
+</div>
+</header>
+<div class="flex flex-1 overflow-hidden">
+<!-- NavigationDrawer -->
+<aside class="hidden md:flex h-full w-64 fixed left-0 top-16 bg-[#131b2e] dark:bg-[#131b2e] flex-col gap-2 py-8 z-40">
+<div class="px-6 mb-4">
+<span class="text-[#dae2fd] font-black tracking-widest text-xs uppercase">Configuration</span>
+</div>
+<nav class="flex flex-col gap-1">
+<a class="bg-[#2d3449] text-[#66dd8b] border-l-4 border-[#66dd8b] px-6 py-3 flex items-center gap-3 font-['Inter'] text-sm tracking-wide uppercase font-medium" href="#">
+<span class="material-symbols-outlined">tune</span>
+                    General
+                </a>
+<a class="text-[#c5c5d4] px-6 py-3 flex items-center gap-3 font-['Inter'] text-sm tracking-wide uppercase font-medium hover:bg-[#2d3449]/40 hover:text-[#dae2fd] transition-all" href="#">
+<span class="material-symbols-outlined">psychology</span>
+                    Models
+                </a>
+<a class="text-[#c5c5d4] px-6 py-3 flex items-center gap-3 font-['Inter'] text-sm tracking-wide uppercase font-medium hover:bg-[#2d3449]/40 hover:text-[#dae2fd] transition-all" href="#">
+<span class="material-symbols-outlined">key</span>
+                    API Keys
+                </a>
+<a class="text-[#c5c5d4] px-6 py-3 flex items-center gap-3 font-['Inter'] text-sm tracking-wide uppercase font-medium hover:bg-[#2d3449]/40 hover:text-[#dae2fd] transition-all" href="#">
+<span class="material-symbols-outlined">notifications</span>
+                    Notifications
+                </a>
+<a class="text-[#c5c5d4] px-6 py-3 flex items-center gap-3 font-['Inter'] text-sm tracking-wide uppercase font-medium hover:bg-[#2d3449]/40 hover:text-[#dae2fd] transition-all" href="#">
+<span class="material-symbols-outlined">shield</span>
+                    Security
+                </a>
+</nav>
+</aside>
+<!-- Main Content -->
+<main class="flex-1 md:ml-64 p-8 overflow-y-auto bg-background">
+<div class="max-w-5xl mx-auto space-y-8">
+<!-- Section Header -->
+<div class="mb-10">
+<h2 class="text-3xl font-extrabold tracking-tight text-on-surface mb-2 font-headline">System Configuration</h2>
+<p class="text-on-surface-variant body-md max-w-2xl">Adjust neural architecture parameters, infrastructure endpoints, and visual preferences for the Sentient Deep interface.</p>
+</div>
+<!-- Bento Grid Layout -->
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+<!-- Server Connection Card -->
+<section class="lg:col-span-12 glass-panel rounded-xl p-8 inner-glow relative overflow-hidden">
+<div class="absolute top-0 left-0 w-1 h-full bg-primary"></div>
+<div class="flex items-center gap-2 mb-6">
+<span class="material-symbols-outlined text-primary-fixed-dim">hub</span>
+<h3 class="text-xs font-bold uppercase tracking-[0.15em] text-on-surface-variant">Server Infrastructure</h3>
+</div>
+<div class="space-y-4">
+<label class="block text-sm font-medium text-on-surface mb-1">WebSocket Endpoint URI</label>
+<div class="flex gap-3">
+<div class="relative flex-1 group">
+<input class="w-full bg-surface-container-highest border-none rounded-lg py-3 px-4 text-on-surface focus:ring-1 focus:ring-primary focus:bg-surface-bright transition-all tabular-nums" type="text" value="wss://api.sentient-deep.ai/v1/stream"/>
+</div>
+<button class="bg-primary text-on-primary px-6 py-2 rounded-lg font-bold flex items-center gap-2 active:scale-95 transition-transform">
+<span class="material-symbols-outlined text-sm">bolt</span>
+                                    Ping
+                                </button>
+</div>
+<p class="text-xs text-on-surface-variant flex items-center gap-2">
+<span class="w-2 h-2 rounded-full bg-primary animate-pulse"></span>
+                                Connection status: Latency 14ms (Optimal)
+                            </p>
+</div>
+</section>
+<!-- ML Hyperparameters Card -->
+<section class="lg:col-span-8 glass-panel rounded-xl p-8 inner-glow">
+<div class="flex items-center gap-2 mb-8">
+<span class="material-symbols-outlined text-tertiary">analytics</span>
+<h3 class="text-xs font-bold uppercase tracking-[0.15em] text-on-surface-variant">Behavioral Neural Tuning</h3>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-10">
+<div class="space-y-2">
+<label class="block text-xs font-bold text-on-surface-variant uppercase tracking-widest">AMNP Early Stopping</label>
+<div class="relative">
+<input class="w-full bg-surface-container-highest border-none rounded-lg py-4 px-4 text-on-surface focus:ring-1 focus:ring-primary focus:bg-surface-bright transition-all tabular-nums font-bold text-lg" type="number" value="15"/>
+<span class="absolute right-4 top-1/2 -translate-y-1/2 text-[10px] text-on-surface-variant font-bold uppercase">Epochs</span>
+</div>
+</div>
+<div class="space-y-2">
+<label class="block text-xs font-bold text-on-surface-variant uppercase tracking-widest">Dropout Rate</label>
+<div class="relative">
+<input class="w-full bg-surface-container-highest border-none rounded-lg py-4 px-4 text-on-surface focus:ring-1 focus:ring-primary focus:bg-surface-bright transition-all tabular-nums font-bold text-lg" step="0.01" type="number" value="0.1"/>
+<span class="absolute right-4 top-1/2 -translate-y-1/2 text-[10px] text-on-surface-variant font-bold uppercase">Ratio</span>
+</div>
+</div>
+</div>
+<div class="space-y-4">
+<label class="block text-xs font-bold text-on-surface-variant uppercase tracking-widest">Cross-Entropy Blending Strategy</label>
+<div class="grid grid-cols-4 gap-1 p-1 bg-surface-container-lowest rounded-xl">
+<button class="py-3 text-xs font-bold text-on-surface-variant hover:text-on-surface transition-colors rounded-lg">Zero</button>
+<button class="py-3 text-xs font-bold text-on-surface-variant hover:text-on-surface transition-colors rounded-lg">Low</button>
+<button class="py-3 text-xs font-bold bg-surface-container-highest text-primary rounded-lg shadow-sm border border-outline-variant/10">Equal</button>
+<button class="py-3 text-xs font-bold text-on-surface-variant hover:text-on-surface transition-colors rounded-lg">High</button>
+</div>
+<p class="text-[11px] text-tertiary leading-relaxed italic">Blending strategy affects the convergence speed of stochastic behavioral nodes.</p>
+</div>
+</section>
+<!-- Theme Settings Card -->
+<section class="lg:col-span-4 glass-panel rounded-xl p-8 inner-glow flex flex-col justify-between">
+<div>
+<div class="flex items-center gap-2 mb-8">
+<span class="material-symbols-outlined text-secondary">palette</span>
+<h3 class="text-xs font-bold uppercase tracking-[0.15em] text-on-surface-variant">Interface Skin</h3>
+</div>
+<div class="space-y-6">
+<div class="flex items-center justify-between p-4 bg-surface-container-low rounded-xl group cursor-pointer border border-transparent hover:border-primary/20 transition-all">
+<div>
+<div class="text-sm font-bold text-on-surface mb-1">Stealth Dark</div>
+<div class="text-[11px] text-on-surface-variant">Optimal for long-term monitoring</div>
+</div>
+<div class="w-10 h-6 bg-primary rounded-full relative p-1 flex items-center">
+<div class="w-4 h-4 bg-on-primary rounded-full translate-x-4 transition-transform"></div>
+</div>
+</div>
+<div class="flex items-center justify-between p-4 bg-surface-container-low rounded-xl group cursor-pointer border border-transparent hover:border-tertiary/20 transition-all opacity-50">
+<div>
+<div class="text-sm font-bold text-on-surface mb-1">Holographic Blue</div>
+<div class="text-[11px] text-on-surface-variant">High-contrast tactical mode</div>
+</div>
+<div class="w-10 h-6 bg-surface-container-highest rounded-full relative p-1 flex items-center">
+<div class="w-4 h-4 bg-outline rounded-full transition-transform"></div>
+</div>
+</div>
+</div>
+</div>
+<div class="mt-8 pt-8 border-t border-outline-variant/10">
+<div class="flex items-center gap-4">
+<div class="w-16 h-16 rounded-xl bg-surface-container-highest flex items-center justify-center overflow-hidden">
+<img class="w-full h-full object-cover" data-alt="abstract procedural geometric pattern with glowing emerald neon lines on dark slate background" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBHs0SvTqrtHrwjHdZzSLnQwrpuk2zFOU2nPykNS-ioq9qPlS_xrn5g1q7G39JtK7tMH1qUnHRJz20pabOyvvzav2fyO3D8L9QSGeFvsSrDKH4fs8O0_tUr0lkuZrzIspOZIZGs-JdS1UkIg-veEvTjKymkEWRZJHhUlRaVoAkh2_r3CVJ-16RHh4h2lc8SubDMLqRHeaGKHp8B2-FDnHG3Flq7BkLuMf5DZAJLhft6sncIuoKux6S9Mhp0NoX485coXabg2bV7bF0"/>
+</div>
+<div>
+<div class="text-[10px] font-bold text-primary tracking-widest uppercase mb-1">Preview Engine</div>
+<div class="text-xs text-on-surface-variant">Sentient Render v4.2</div>
+</div>
+</div>
+</div>
+</section>
+</div>
+<!-- Footer Support Information -->
+<div class="grid grid-cols-1 md:grid-cols-3 gap-6 pt-10">
+<div class="p-6 rounded-xl bg-surface-container-low flex flex-col gap-3">
+<span class="material-symbols-outlined text-primary-fixed-dim text-xl">description</span>
+<div class="text-sm font-bold">API Documentation</div>
+<div class="text-xs text-on-surface-variant">Review the schema for behavioral event ingestion.</div>
+</div>
+<div class="p-6 rounded-xl bg-surface-container-low flex flex-col gap-3">
+<span class="material-symbols-outlined text-secondary text-xl">history</span>
+<div class="text-sm font-bold">Config History</div>
+<div class="text-xs text-on-surface-variant">Last modified: Oct 24, 2023 by system.admin</div>
+</div>
+<div class="p-6 rounded-xl bg-surface-container-low flex flex-col gap-3">
+<span class="material-symbols-outlined text-tertiary text-xl">support</span>
+<div class="text-sm font-bold">Node Health</div>
+<div class="text-xs text-on-surface-variant">All 12 cluster nodes reporting normal operation.</div>
+</div>
+</div>
+</div>
+</main>
+</div>
+</body></html>

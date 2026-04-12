@@ -8,7 +8,7 @@ import {
   ResponsiveContainer,
   Cell,
 } from "recharts";
-import { BarChart3, Layers } from "lucide-react";
+import { Loader } from "lucide-react";
 
 const FEATURE_SHORT: Record<string, string> = {
   click_frequency: "Click",
@@ -22,9 +22,9 @@ const FEATURE_SHORT: Record<string, string> = {
 };
 
 function colorFromValue(v: number): string {
-  if (v >= 0.6) return "#818cf8"; // accent/indigo
-  if (v >= 0.3) return "#a78bfa"; // lighter purple
-  return "#6b7280"; // gray
+  if (v >= 0.6) return "var(--color-primary)"; // emerald
+  if (v >= 0.3) return "var(--color-tertiary)"; // purple
+  return "var(--color-on-surface-variant)"; // gray
 }
 
 export function Explanations() {
@@ -33,8 +33,8 @@ export function Explanations() {
 
   if (!prediction) {
     return (
-      <div className="rounded-2xl bg-surface-light/60 backdrop-blur-sm border border-white/5 p-6 min-h-[260px] flex items-center justify-center">
-        <p className="text-sm text-gray-500">No explanation data yet</p>
+      <div className="bg-surface-container-low rounded-[2rem] p-8 min-h-[260px] flex items-center justify-center">
+        <Loader size={24} className="text-on-surface-variant animate-spin" />
       </div>
     );
   }
@@ -48,40 +48,41 @@ export function Explanations() {
   );
 
   return (
-    <div className="space-y-4">
+    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
       {/* Feature Importance Chart */}
-      <div className="rounded-2xl bg-surface-light/60 backdrop-blur-sm border border-white/5 p-5">
-        <div className="flex items-center gap-2 mb-4">
-          <BarChart3 size={16} className="text-accent" />
-          <h3 className="text-xs font-semibold uppercase tracking-wider text-gray-400">
-            Feature Importance
-          </h3>
+      <div className="bg-surface-container-low rounded-[2rem] p-8 border border-white/5 shadow-2xl">
+        <div className="flex justify-between items-center mb-8">
+          <h3 className="text-sm font-bold uppercase tracking-widest text-on-surface pt-1">Feature Weighting (Importance)</h3>
+          <span className="material-symbols-outlined text-on-surface-variant text-sm">info</span>
         </div>
         <ResponsiveContainer width="100%" height={220}>
           <BarChart
             data={importanceData}
-            margin={{ top: 5, right: 5, bottom: 5, left: -10 }}
+            margin={{ top: 5, right: 5, bottom: 5, left: -20 }}
           >
             <XAxis
               dataKey="name"
-              tick={{ fill: "#9ca3af", fontSize: 10 }}
-              axisLine={{ stroke: "#374151" }}
+              tick={{ fill: "var(--color-on-surface-variant)", fontSize: 10, fontWeight: "bold" }}
+              axisLine={{ stroke: "var(--color-surface-container-highest)" }}
               tickLine={false}
             />
             <YAxis
-              tick={{ fill: "#6b7280", fontSize: 10 }}
+              tick={{ fill: "var(--color-on-surface-variant)", fontSize: 10, fontWeight: "bold" }}
               axisLine={false}
               tickLine={false}
               domain={[0, 1]}
             />
             <Tooltip
               contentStyle={{
-                backgroundColor: "#1f2937",
+                backgroundColor: "var(--color-surface-container-high)",
                 border: "1px solid rgba(255,255,255,0.1)",
-                borderRadius: "8px",
+                borderRadius: "12px",
                 fontSize: "12px",
-                color: "#e5e7eb",
+                fontWeight: "bold",
+                color: "var(--color-on-surface)",
+                boxShadow: "0 10px 25px -5px rgba(0, 0, 0, 0.5)"
               }}
+              cursor={{fill: 'var(--color-surface-container-highest)'}}
             />
             <Bar dataKey="value" radius={[4, 4, 0, 0]} maxBarSize={32}>
               {importanceData.map((entry, i) => (
@@ -92,73 +93,56 @@ export function Explanations() {
         </ResponsiveContainer>
       </div>
 
-      {/* AMNP Diagnostics (conditional) */}
-      {activeModel === "AMNP" && prediction.extras && (
-        <div className="rounded-2xl bg-surface-light/60 backdrop-blur-sm border border-white/5 p-5">
-          <div className="flex items-center gap-2 mb-4">
-            <Layers size={16} className="text-accent" />
-            <h3 className="text-xs font-semibold uppercase tracking-wider text-gray-400">
-              AMNP Internals
-            </h3>
-          </div>
-
-          {/* Component weights */}
-          {prediction.extras.component_weights && (
-            <div className="space-y-3">
-              <div>
-                <div className="flex justify-between text-xs mb-1">
-                  <span className="text-gray-400">Nonlinear Path</span>
-                  <span className="font-mono text-indigo-400">
-                    {(
-                      prediction.extras.component_weights.nonlinear_weight * 100
-                    ).toFixed(1)}
-                    %
-                  </span>
-                </div>
-                <div className="h-2 rounded-full bg-surface-lighter overflow-hidden">
-                  <div
-                    className="h-full rounded-full bg-indigo-500 transition-all duration-200"
-                    style={{
-                      width: `${prediction.extras.component_weights.nonlinear_weight * 100}%`,
-                    }}
-                  />
-                </div>
-              </div>
-              <div>
-                <div className="flex justify-between text-xs mb-1">
-                  <span className="text-gray-400">Linear Path</span>
-                  <span className="font-mono text-violet-400">
-                    {(
-                      prediction.extras.component_weights.linear_weight * 100
-                    ).toFixed(1)}
-                    %
-                  </span>
-                </div>
-                <div className="h-2 rounded-full bg-surface-lighter overflow-hidden">
-                  <div
-                    className="h-full rounded-full bg-violet-500 transition-all duration-200"
-                    style={{
-                      width: `${prediction.extras.component_weights.linear_weight * 100}%`,
-                    }}
-                  />
-                </div>
-              </div>
+      {/* AMNP Diagnostics / Telemetry Placeholder */}
+      <div className="bg-surface-container-low rounded-[2rem] p-8 border border-white/5 shadow-2xl">
+         <h3 className="text-sm font-bold uppercase tracking-widest text-on-surface mb-8 pt-1">Model Diagnostics</h3>
+         
+          {/* AMNP Internals */}
+          {activeModel === "AMNP" && prediction.extras ? (
+            <div className="space-y-6">
+              {prediction.extras.component_weights && (
+                <>
+                  <div className="space-y-2">
+                    <div className="flex justify-between text-[11px] font-black uppercase tracking-widest text-on-surface-variant">
+                      <span>Nonlinear Path (Deep)</span>
+                      <span className="tabular-numbers text-tertiary">
+                        {(prediction.extras.component_weights.nonlinear_weight * 100).toFixed(1)}%
+                      </span>
+                    </div>
+                    <div className="w-full h-2 bg-surface-container-lowest rounded-full overflow-hidden">
+                      <div className="h-full bg-tertiary transition-all duration-300" 
+                           style={{width: `${prediction.extras.component_weights.nonlinear_weight * 100}%`}}></div>
+                    </div>
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <div className="flex justify-between text-[11px] font-black uppercase tracking-widest text-on-surface-variant">
+                      <span>Linear Path (Perceptron)</span>
+                      <span className="tabular-numbers text-secondary">
+                        {(prediction.extras.component_weights.linear_weight * 100).toFixed(1)}%
+                      </span>
+                    </div>
+                    <div className="w-full h-2 bg-surface-container-lowest rounded-full overflow-hidden">
+                      <div className="h-full bg-secondary transition-all duration-300" 
+                           style={{width: `${prediction.extras.component_weights.linear_weight * 100}%`}}></div>
+                    </div>
+                  </div>
+                </>
+              )}
+               {prediction.extras.mean_margin != null && (
+                 <div className="p-4 bg-surface-container-highest rounded-2xl mt-4 flex justify-between items-center">
+                    <span className="text-[11px] font-black uppercase tracking-widest text-on-surface-variant">Adaptive Margin</span>
+                    <span className="text-xl font-bold tabular-nums text-primary">{prediction.extras.mean_margin.toFixed(4)}</span>
+                 </div>
+               )}
+            </div>
+          ) : (
+            <div className="flex flex-col items-center justify-center p-12 opacity-50">
+               <span className="material-symbols-outlined text-4xl mb-4">analytics</span>
+               <p className="text-xs font-bold uppercase tracking-widest text-center">Diagnostics only available for AMNP architectures</p>
             </div>
           )}
-
-          {/* Adaptive margin */}
-          {prediction.extras.mean_margin != null && (
-            <div className="mt-4 pt-3 border-t border-white/5">
-              <div className="flex justify-between items-baseline">
-                <span className="text-xs text-gray-400">Adaptive Margin</span>
-                <span className="text-lg font-mono font-bold text-accent">
-                  {prediction.extras.mean_margin.toFixed(4)}
-                </span>
-              </div>
-            </div>
-          )}
-        </div>
-      )}
+      </div>
     </div>
   );
 }

@@ -47,10 +47,15 @@ class NeuralNetModel(BaseModel):
         self, X: np.ndarray, y: np.ndarray, epochs: int = 100, lr: float = 1e-3
     ) -> Dict:
         self._model.train()
-        optimizer = optim.Adam(self._model.parameters(), lr=lr)
-        scheduler = optim.lr_scheduler.ReduceLROnPlateau(
-            optimizer, mode="min", factor=0.5, patience=5
-        )
+        
+        if not hasattr(self, "_optimizer"):
+            self._optimizer = optim.Adam(self._model.parameters(), lr=lr)
+            self._scheduler = optim.lr_scheduler.ReduceLROnPlateau(
+                self._optimizer, mode="min", factor=0.5, patience=5
+            )
+            
+        optimizer = self._optimizer
+        scheduler = self._scheduler
 
         # Internal validation split (80/20) for early stopping
         n = len(X)
