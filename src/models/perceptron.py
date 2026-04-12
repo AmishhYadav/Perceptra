@@ -1,5 +1,6 @@
 """Perceptron model wrapping scikit-learn's Perceptron with BaseModel interface."""
 import numpy as np
+import joblib
 from sklearn.linear_model import Perceptron
 from sklearn.calibration import CalibratedClassifierCV
 from typing import Dict
@@ -66,3 +67,13 @@ class PerceptronModel(BaseModel):
         else:
             importance = np.abs(coefs)
         return {"feature_importance": importance}
+
+    def save(self, path: str) -> None:
+        joblib.dump({"model": self._model, "calibrated": self._calibrated}, path)
+
+    def load(self, path: str) -> None:
+        data = joblib.load(path)
+        self._model = data["model"]
+        self._calibrated = data["calibrated"]
+        self.is_trained = True
+

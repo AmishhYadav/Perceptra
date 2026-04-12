@@ -56,6 +56,24 @@ class BaseModel(ABC):
         """
         pass
 
+    @abstractmethod
+    def save(self, path: str) -> None:
+        """Save trained model weights/state to disk.
+
+        Args:
+            path: File path to save to (extension depends on framework).
+        """
+        pass
+
+    @abstractmethod
+    def load(self, path: str) -> None:
+        """Load model weights/state from disk. Sets is_trained = True.
+
+        Args:
+            path: File path to load from.
+        """
+        pass
+
     def get_params(self) -> Dict:
         """Return model parameters for serialization."""
         return {

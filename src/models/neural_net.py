@@ -43,12 +43,34 @@ class NeuralNetModel(BaseModel):
     def train(self, X: np.ndarray, y: np.ndarray, epochs: int = 100, lr: float = 1e-3) -> Dict:
         self._model.train()
         optimizer = optim.Adam(self._model.parameters(), lr=lr)
-        X_t = torch.tensor(X, dtype=torch.float32).to(self._device)
-        y_t = torch.tensor(y, dtype=torch.long).to(self._device)
+        scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='min', factor=0.5, patience=5)
 
-        history = {"loss": [], "accuracy": []}
+        # Internal validation split (80/20) for early stopping
+        n = len(X)
+        if n >= 100:
+            n_val = max(int(n * 0.2), 10)
+            indices = np.random.permutation(n)
+            X_train_np, X_val_np = X[indices[n_val:]], X[indices[:n_val]]
+            y_train_np, y_val_np = y[indices[n_val:]], y[indices[:n_val]]
+        else:
+            X_train_np, X_val_np = X, X
+            y_train_np, y_val_np = y, y
+
+        X_t = torch.tensor(X_train_np, dtype=torch.float32).to(self._device)
+        y_t = torch.tensor(y_train_np, dtype=torch.long).to(self._device)
+        X_v = torch.tensor(X_val_np, dtype=torch.float32).to(self._device)
+        y_v = torch.tensor(y_val_np, dtype=torch.long).to(self._device)
+
+        history = {"loss": [], "accuracy": [], "val_loss": [], "lr": []}
+
+        # Early stopping state
+        best_val_loss = float("inf")
+        best_state = None
+        patience_counter = 0
+        patience = 10
 
         for epoch in range(epochs):
+            self._model.train()
             optimizer.zero_grad()
             logits = self._model(X_t)
             loss = self._criterion(logits, y_t)
@@ -56,9 +78,34 @@ class NeuralNetModel(BaseModel):
             optimizer.step()
 
             preds = logits.argmax(dim=1).cpu().numpy()
-            acc = float(np.mean(preds == y))
+            acc = float(np.mean(preds == y_train_np))
+
+            # Validation loss
+            self._model.eval()
+            with torch.no_grad():
+                val_logits = self._model(X_v)
+                val_loss = self._criterion(val_logits, y_v).item()
+
+            scheduler.step(val_loss)
+
             history["loss"].append(float(loss.item()))
             history["accuracy"].append(acc)
+            history["val_loss"].append(val_loss)
+            history["lr"].append(optimizer.param_groups[0]["lr"])
+
+            # Early stopping check
+            if val_loss < best_val_loss - 1e-4:
+                best_val_loss = val_loss
+                best_state = {k: v.clone() for k, v in self._model.state_dict().items()}
+                patience_counter = 0
+            else:
+                patience_counter += 1
+                if patience_counter >= patience:
+                    break
+
+        # Restore best weights
+        if best_state is not None:
+            self._model.load_state_dict(best_state)
 
         self.is_trained = True
         self.training_history = history
@@ -91,3 +138,12 @@ class NeuralNetModel(BaseModel):
         gradients = X_t.grad.cpu().numpy()
         importance = np.mean(np.abs(gradients), axis=0)
         return {"feature_importance": importance}
+
+    def save(self, path: str) -> None:
+        torch.save(self._model.state_dict(), path)
+
+    def load(self, path: str) -> None:
+        self._model.load_state_dict(torch.load(path, map_location=self._device, weights_only=True))
+        self._model.eval()
+        self.is_trained = True
+

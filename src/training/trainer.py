@@ -1,6 +1,7 @@
 """Training orchestrator for running all Perceptra models on the same dataset."""
 import numpy as np
 import time
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from typing import Dict, List, Optional
 from src.models.base import BaseModel
 from src.utils.metrics import compute_all_metrics
@@ -15,6 +16,22 @@ class ModelTrainer:
         self.models = models
         self.results: Dict[str, Dict] = {}
 
+    @staticmethod
+    def _train_single(model: BaseModel, X: np.ndarray, y: np.ndarray,
+                      epochs: int, lr: float) -> Dict:
+        """Train a single model and return its results. Runs in a thread."""
+        start = time.time()
+        history = model.train(X, y, epochs=epochs, lr=lr)
+        elapsed = time.time() - start
+        preds = model.predict(X)
+        metrics = compute_all_metrics(y, preds, model.n_classes)
+        return {
+            "name": model.name,
+            "history": history,
+            "metrics": metrics,
+            "training_time": elapsed,
+        }
+
     def train_all(
         self,
         X: np.ndarray,
@@ -22,8 +39,9 @@ class ModelTrainer:
         epochs: int = 100,
         lr: float = 1e-3,
         verbose: bool = True,
+        parallel: bool = True,
     ) -> Dict[str, Dict]:
-        """Train all models sequentially on the same data.
+        """Train all models on the same data.
 
         Args:
             X: Feature matrix (n_samples, n_features).
@@ -31,28 +49,38 @@ class ModelTrainer:
             epochs: Training iterations per model.
             lr: Learning rate.
             verbose: Print progress.
+            parallel: If True, train models concurrently via ThreadPoolExecutor.
 
         Returns:
             Dictionary mapping model name to training results.
         """
         results = {}
-        for model in self.models:
-            if verbose:
-                print(f"Training {model.name}...")
-            start = time.time()
-            history = model.train(X, y, epochs=epochs, lr=lr)
-            elapsed = time.time() - start
 
-            preds = model.predict(X)
-            metrics = compute_all_metrics(y, preds, model.n_classes)
-
-            results[model.name] = {
-                "history": history,
-                "metrics": metrics,
-                "training_time": elapsed,
-            }
+        if parallel and len(self.models) > 1:
             if verbose:
-                print(f"  {model.name}: accuracy={metrics['accuracy']:.4f}, time={elapsed:.2f}s")
+                print(f"Training {len(self.models)} models in parallel...")
+            with ThreadPoolExecutor(max_workers=len(self.models)) as executor:
+                futures = {
+                    executor.submit(self._train_single, model, X, y, epochs, lr): model
+                    for model in self.models
+                }
+                for future in as_completed(futures):
+                    result = future.result()
+                    name = result.pop("name")
+                    results[name] = result
+                    if verbose:
+                        print(f"  ✓ {name}: accuracy={result['metrics']['accuracy']:.4f}, "
+                              f"time={result['training_time']:.2f}s")
+        else:
+            for model in self.models:
+                if verbose:
+                    print(f"Training {model.name}...")
+                result = self._train_single(model, X, y, epochs, lr)
+                name = result.pop("name")
+                results[name] = result
+                if verbose:
+                    print(f"  ✓ {name}: accuracy={result['metrics']['accuracy']:.4f}, "
+                          f"time={result['training_time']:.2f}s")
 
         self.results = results
         return results

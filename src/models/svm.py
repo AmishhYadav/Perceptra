@@ -1,5 +1,6 @@
 """SVM model wrapping scikit-learn's SVC with BaseModel interface."""
 import numpy as np
+import joblib
 from sklearn.svm import SVC
 from sklearn.inspection import permutation_importance
 from typing import Dict
@@ -51,3 +52,13 @@ class SVMModel(BaseModel):
             )
             return {"feature_importance": result.importances_mean}
         return {"feature_importance": np.zeros(self.n_features)}
+
+    def save(self, path: str) -> None:
+        joblib.dump({"model": self._model, "X_train": self._X_train, "y_train": self._y_train}, path)
+
+    def load(self, path: str) -> None:
+        data = joblib.load(path)
+        self._model = data["model"]
+        self._X_train = data["X_train"]
+        self._y_train = data["y_train"]
+        self.is_trained = True
