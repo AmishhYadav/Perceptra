@@ -6,6 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from src.api.manager import ModelManager
 from src.api.routes import router as ws_router, set_manager
+from src.api.visualization import router as viz_router
 
 
 @asynccontextmanager
@@ -38,6 +39,7 @@ app.add_middleware(
 
 # Mount WebSocket routes under /ws
 app.include_router(ws_router, prefix="/ws")
+app.include_router(viz_router, prefix="/ws")
 
 
 @app.get("/health")

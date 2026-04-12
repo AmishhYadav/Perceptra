@@ -1,14 +1,18 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useInferenceStore } from "./store/useInferenceStore";
 import { ControlPanel } from "./components/ControlPanel";
 import { PredictionCard } from "./components/PredictionCard";
 import { Explanations } from "./components/Explanations";
-import { Activity } from "lucide-react";
+import { VisualPlayground } from "./components/VisualPlayground";
+import { Activity, BarChart3 } from "lucide-react";
+
+type Tab = "dashboard" | "visual";
 
 function App() {
+  const [activeTab, setActiveTab] = useState<Tab>("dashboard");
   const connectToModel = useInferenceStore((s) => s.connectToModel);
 
-  // Auto-connect to AMNP on mount
+  // Auto-connect to AMNP on mount (for dashboard tab)
   useEffect(() => {
     connectToModel("AMNP");
     return () => {
@@ -34,28 +38,59 @@ function App() {
               </p>
             </div>
           </div>
-          <div className="text-xs text-gray-600 font-mono">v0.1.0</div>
+
+          {/* Tab Navigation */}
+          <div className="flex items-center gap-1 bg-surface/60 rounded-xl p-1 border border-white/5">
+            <button
+              onClick={() => setActiveTab("dashboard")}
+              className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-semibold transition-all ${
+                activeTab === "dashboard"
+                  ? "bg-accent/15 text-accent"
+                  : "text-gray-500 hover:text-gray-300"
+              }`}
+            >
+              <Activity size={14} />
+              Dashboard
+            </button>
+            <button
+              onClick={() => setActiveTab("visual")}
+              className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-semibold transition-all ${
+                activeTab === "visual"
+                  ? "bg-accent/15 text-accent"
+                  : "text-gray-500 hover:text-gray-300"
+              }`}
+            >
+              <BarChart3 size={14} />
+              Visual
+            </button>
+          </div>
+
+          <div className="text-xs text-gray-600 font-mono">v0.2.0</div>
         </div>
       </header>
 
-      {/* Main grid */}
+      {/* Main content */}
       <main className="max-w-7xl mx-auto px-6 py-6">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
-          {/* Left: Control Panel */}
-          <div className="lg:col-span-3">
-            <ControlPanel />
-          </div>
+        {activeTab === "dashboard" ? (
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
+            {/* Left: Control Panel */}
+            <div className="lg:col-span-3">
+              <ControlPanel />
+            </div>
 
-          {/* Center: Prediction Card */}
-          <div className="lg:col-span-4">
-            <PredictionCard />
-          </div>
+            {/* Center: Prediction Card */}
+            <div className="lg:col-span-4">
+              <PredictionCard />
+            </div>
 
-          {/* Right: Explanations */}
-          <div className="lg:col-span-5">
-            <Explanations />
+            {/* Right: Explanations */}
+            <div className="lg:col-span-5">
+              <Explanations />
+            </div>
           </div>
-        </div>
+        ) : (
+          <VisualPlayground />
+        )}
       </main>
     </div>
   );
