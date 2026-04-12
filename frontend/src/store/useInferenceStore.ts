@@ -5,7 +5,7 @@
  * and incoming prediction results — all in a single flat store that
  * components can subscribe to with fine-grained selectors.
  */
-import { create } from 'zustand';
+import { create } from "zustand";
 
 /* ── TypeScript contracts (mirrors src/api/schemas.py) ── */
 
@@ -22,7 +22,7 @@ export interface TelemetryInput {
 
 export interface PredictionOutput {
   model_name: string;
-  predicted_class: 'focused' | 'distracted' | 'confused';
+  predicted_class: "focused" | "distracted" | "confused";
   confidence: number;
   probabilities: Record<string, number>;
   feature_importance: Record<string, number>;
@@ -32,27 +32,33 @@ export interface PredictionOutput {
   };
 }
 
-export const AVAILABLE_MODELS = ['AMNP', 'NeuralNetwork', 'SVM', 'Perceptron'] as const;
+export const AVAILABLE_MODELS = [
+  "AMNP",
+  "NeuralNetwork",
+  "SVM",
+  "Perceptron",
+] as const;
 export type ModelName = (typeof AVAILABLE_MODELS)[number];
 
 export const FEATURE_KEYS: (keyof TelemetryInput)[] = [
-  'click_frequency',
-  'hesitation_time',
-  'misclick_rate',
-  'scroll_depth',
-  'movement_smoothness',
-  'dwell_time',
-  'navigation_speed',
-  'direction_changes',
+  "click_frequency",
+  "hesitation_time",
+  "misclick_rate",
+  "scroll_depth",
+  "movement_smoothness",
+  "dwell_time",
+  "navigation_speed",
+  "direction_changes",
 ];
 
-const WS_BASE = import.meta.env.VITE_WS_BASE_URL || 'ws://localhost:8000/ws/inference';
+const WS_BASE =
+  import.meta.env.VITE_WS_BASE_URL || "ws://localhost:8000/ws/inference";
 
 /* ── Store shape ── */
 
 interface InferenceState {
   activeModel: ModelName;
-  connectionStatus: 'disconnected' | 'connecting' | 'connected' | 'error';
+  connectionStatus: "disconnected" | "connecting" | "connected" | "error";
   currentPrediction: PredictionOutput | null;
   ws: WebSocket | null;
 
@@ -62,8 +68,8 @@ interface InferenceState {
 }
 
 export const useInferenceStore = create<InferenceState>((set, get) => ({
-  activeModel: 'AMNP',
-  connectionStatus: 'disconnected',
+  activeModel: "AMNP",
+  connectionStatus: "disconnected",
   currentPrediction: null,
   ws: null,
 
@@ -74,12 +80,16 @@ export const useInferenceStore = create<InferenceState>((set, get) => ({
       ws.close();
     }
 
-    set({ activeModel: model, connectionStatus: 'connecting', currentPrediction: null });
+    set({
+      activeModel: model,
+      connectionStatus: "connecting",
+      currentPrediction: null,
+    });
 
     const socket = new WebSocket(`${WS_BASE}/${model}`);
 
     socket.onopen = () => {
-      set({ connectionStatus: 'connected', ws: socket });
+      set({ connectionStatus: "connected", ws: socket });
     };
 
     socket.onmessage = (event) => {
@@ -94,11 +104,11 @@ export const useInferenceStore = create<InferenceState>((set, get) => ({
     };
 
     socket.onerror = () => {
-      set({ connectionStatus: 'error' });
+      set({ connectionStatus: "error" });
     };
 
     socket.onclose = () => {
-      set({ connectionStatus: 'disconnected', ws: null });
+      set({ connectionStatus: "disconnected", ws: null });
     };
 
     // Store early so sendTelemetry can use it while connecting
@@ -108,12 +118,16 @@ export const useInferenceStore = create<InferenceState>((set, get) => ({
   disconnect: () => {
     const { ws } = get();
     if (ws) ws.close();
-    set({ ws: null, connectionStatus: 'disconnected', currentPrediction: null });
+    set({
+      ws: null,
+      connectionStatus: "disconnected",
+      currentPrediction: null,
+    });
   },
 
   sendTelemetry: (payload: TelemetryInput) => {
     const { ws, connectionStatus } = get();
-    if (ws && connectionStatus === 'connected') {
+    if (ws && connectionStatus === "connected") {
       ws.send(JSON.stringify(payload));
     }
   },

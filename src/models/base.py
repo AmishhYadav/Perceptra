@@ -1,4 +1,5 @@
 """Abstract base class for all Perceptra models."""
+
 from abc import ABC, abstractmethod
 import numpy as np
 from typing import Dict, Optional
@@ -22,7 +23,9 @@ class BaseModel(ABC):
         self.training_history: list = []
 
     @abstractmethod
-    def train(self, X: np.ndarray, y: np.ndarray, epochs: int = 100, lr: float = 0.01) -> Dict:
+    def train(
+        self, X: np.ndarray, y: np.ndarray, epochs: int = 100, lr: float = 0.01
+    ) -> Dict:
         """Train the model on feature matrix X and labels y.
 
         Args:

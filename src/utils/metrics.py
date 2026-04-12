@@ -1,4 +1,5 @@
 """Evaluation metrics for model comparison."""
+
 import numpy as np
 from typing import Dict
 
@@ -8,7 +9,9 @@ def accuracy(y_true: np.ndarray, y_pred: np.ndarray) -> float:
     return float(np.mean(y_true == y_pred))
 
 
-def precision_per_class(y_true: np.ndarray, y_pred: np.ndarray, n_classes: int) -> np.ndarray:
+def precision_per_class(
+    y_true: np.ndarray, y_pred: np.ndarray, n_classes: int
+) -> np.ndarray:
     """Compute precision for each class."""
     precisions = np.zeros(n_classes)
     for c in range(n_classes):
@@ -18,7 +21,9 @@ def precision_per_class(y_true: np.ndarray, y_pred: np.ndarray, n_classes: int) 
     return precisions
 
 
-def recall_per_class(y_true: np.ndarray, y_pred: np.ndarray, n_classes: int) -> np.ndarray:
+def recall_per_class(
+    y_true: np.ndarray, y_pred: np.ndarray, n_classes: int
+) -> np.ndarray:
     """Compute recall for each class."""
     recalls = np.zeros(n_classes)
     for c in range(n_classes):

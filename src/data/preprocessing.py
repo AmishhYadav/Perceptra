@@ -1,4 +1,5 @@
 """Feature preprocessing pipeline for normalizing raw telemetry into model inputs."""
+
 import numpy as np
 import joblib
 from typing import List, Dict, Optional
@@ -79,4 +80,3 @@ class FeaturePreprocessor:
             vec = [record.get(name, 0.0) for name in FEATURE_NAMES]
             vectors.append(vec)
         return np.array(vectors, dtype=np.float32)
-

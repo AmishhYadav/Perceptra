@@ -1,4 +1,5 @@
 """Training orchestrator for running all Perceptra models on the same dataset."""
+
 import numpy as np
 import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
@@ -17,8 +18,9 @@ class ModelTrainer:
         self.results: Dict[str, Dict] = {}
 
     @staticmethod
-    def _train_single(model: BaseModel, X: np.ndarray, y: np.ndarray,
-                      epochs: int, lr: float) -> Dict:
+    def _train_single(
+        model: BaseModel, X: np.ndarray, y: np.ndarray, epochs: int, lr: float
+    ) -> Dict:
         """Train a single model and return its results. Runs in a thread."""
         start = time.time()
         history = model.train(X, y, epochs=epochs, lr=lr)
@@ -69,8 +71,10 @@ class ModelTrainer:
                     name = result.pop("name")
                     results[name] = result
                     if verbose:
-                        print(f"  ✓ {name}: accuracy={result['metrics']['accuracy']:.4f}, "
-                              f"time={result['training_time']:.2f}s")
+                        print(
+                            f"  ✓ {name}: accuracy={result['metrics']['accuracy']:.4f}, "
+                            f"time={result['training_time']:.2f}s"
+                        )
         else:
             for model in self.models:
                 if verbose:
@@ -79,8 +83,10 @@ class ModelTrainer:
                 name = result.pop("name")
                 results[name] = result
                 if verbose:
-                    print(f"  ✓ {name}: accuracy={result['metrics']['accuracy']:.4f}, "
-                          f"time={result['training_time']:.2f}s")
+                    print(
+                        f"  ✓ {name}: accuracy={result['metrics']['accuracy']:.4f}, "
+                        f"time={result['training_time']:.2f}s"
+                    )
 
         self.results = results
         return results

@@ -1,4 +1,5 @@
 """WebSocket routes for real-time behavioral inference."""
+
 import json
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 
@@ -27,10 +28,12 @@ async def inference_ws(websocket: WebSocket, model_name: str):
 
     # Validate model name upfront
     if _manager is None or model_name not in _manager.list_models():
-        await websocket.send_json({
-            "error": f"Unknown model: {model_name}",
-            "available": _manager.list_models() if _manager else [],
-        })
+        await websocket.send_json(
+            {
+                "error": f"Unknown model: {model_name}",
+                "available": _manager.list_models() if _manager else [],
+            }
+        )
         await websocket.close()
         return
 

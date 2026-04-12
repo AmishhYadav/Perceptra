@@ -1,5 +1,7 @@
 """Visualization utilities for model evaluation — headless Agg backend."""
+
 import matplotlib
+
 matplotlib.use("Agg")  # Force headless rendering before pyplot import
 
 import matplotlib.pyplot as plt
@@ -30,7 +32,9 @@ def plot_confusion_matrices(
         The output file path.
     """
     fig, axes = plt.subplots(2, 2, figsize=(12, 10))
-    fig.suptitle("Confusion Matrices — All Models", fontsize=16, fontweight="bold", y=0.98)
+    fig.suptitle(
+        "Confusion Matrices — All Models", fontsize=16, fontweight="bold", y=0.98
+    )
 
     for ax, (name, cm) in zip(axes.flat, matrices.items()):
         sns.heatmap(
@@ -86,7 +90,9 @@ def plot_roc_curves(
         for color, (model_name, probs) in zip(COLORS, model_probs.items()):
             fpr, tpr, _ = roc_curve(y_bin[:, cls_idx], probs[:, cls_idx])
             roc_auc = auc(fpr, tpr)
-            ax.plot(fpr, tpr, color=color, lw=2, label=f"{model_name} (AUC={roc_auc:.3f})")
+            ax.plot(
+                fpr, tpr, color=color, lw=2, label=f"{model_name} (AUC={roc_auc:.3f})"
+            )
 
         ax.set_title(f"{class_names[cls_idx]}", fontsize=13, fontweight="bold")
         ax.set_xlabel("False Positive Rate")

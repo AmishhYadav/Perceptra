@@ -1,4 +1,5 @@
 """Feature vector schema and prediction result types for Perceptra."""
+
 from dataclasses import dataclass, field
 from typing import List, Dict
 
@@ -26,6 +27,7 @@ N_CLASSES = len(BEHAVIOR_CLASSES)
 @dataclass
 class PredictionResult:
     """Structured prediction output from any model."""
+
     predicted_class: str
     confidence: float
     class_probabilities: Dict[str, float]

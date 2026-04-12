@@ -1,16 +1,20 @@
-import { useState, useEffect, useRef } from 'react';
-import { useInferenceStore, FEATURE_KEYS, type TelemetryInput } from '../store/useInferenceStore';
-import { SlidersHorizontal } from 'lucide-react';
+import { useState, useEffect, useRef } from "react";
+import {
+  useInferenceStore,
+  FEATURE_KEYS,
+  type TelemetryInput,
+} from "../store/useInferenceStore";
+import { SlidersHorizontal } from "lucide-react";
 
 const FEATURE_LABELS: Record<string, string> = {
-  click_frequency: 'Click Freq',
-  hesitation_time: 'Hesitation',
-  misclick_rate: 'Misclicks',
-  scroll_depth: 'Scroll Depth',
-  movement_smoothness: 'Smoothness',
-  dwell_time: 'Dwell Time',
-  navigation_speed: 'Nav Speed',
-  direction_changes: 'Dir Changes',
+  click_frequency: "Click Freq",
+  hesitation_time: "Hesitation",
+  misclick_rate: "Misclicks",
+  scroll_depth: "Scroll Depth",
+  movement_smoothness: "Smoothness",
+  dwell_time: "Dwell Time",
+  navigation_speed: "Nav Speed",
+  direction_changes: "Dir Changes",
 };
 
 const PRESETS: Record<string, TelemetryInput> = {
@@ -67,7 +71,7 @@ export function TelemetrySliders() {
 
   // Emit telemetry 10× per second
   useEffect(() => {
-    if (connectionStatus !== 'connected') return;
+    if (connectionStatus !== "connected") return;
 
     const id = setInterval(() => {
       sendTelemetry(slidersRef.current);
@@ -102,11 +106,11 @@ export function TelemetrySliders() {
             className={`
               rounded-md px-3 py-1.5 text-xs font-medium transition-all cursor-pointer
               ${
-                name === 'Focused'
-                  ? 'bg-emerald-500/15 text-emerald-400 hover:bg-emerald-500/25'
-                  : name === 'Distracted'
-                  ? 'bg-amber-500/15 text-amber-400 hover:bg-amber-500/25'
-                  : 'bg-red-500/15 text-red-400 hover:bg-red-500/25'
+                name === "Focused"
+                  ? "bg-emerald-500/15 text-emerald-400 hover:bg-emerald-500/25"
+                  : name === "Distracted"
+                    ? "bg-amber-500/15 text-amber-400 hover:bg-amber-500/25"
+                    : "bg-red-500/15 text-red-400 hover:bg-red-500/25"
               }
             `}
           >

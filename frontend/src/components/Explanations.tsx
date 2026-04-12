@@ -1,4 +1,4 @@
-import { useInferenceStore } from '../store/useInferenceStore';
+import { useInferenceStore } from "../store/useInferenceStore";
 import {
   BarChart,
   Bar,
@@ -7,24 +7,24 @@ import {
   Tooltip,
   ResponsiveContainer,
   Cell,
-} from 'recharts';
-import { BarChart3, Layers } from 'lucide-react';
+} from "recharts";
+import { BarChart3, Layers } from "lucide-react";
 
 const FEATURE_SHORT: Record<string, string> = {
-  click_frequency: 'Click',
-  hesitation_time: 'Hesit.',
-  misclick_rate: 'Misclk',
-  scroll_depth: 'Scroll',
-  movement_smoothness: 'Smooth',
-  dwell_time: 'Dwell',
-  navigation_speed: 'Speed',
-  direction_changes: 'DirChg',
+  click_frequency: "Click",
+  hesitation_time: "Hesit.",
+  misclick_rate: "Misclk",
+  scroll_depth: "Scroll",
+  movement_smoothness: "Smooth",
+  dwell_time: "Dwell",
+  navigation_speed: "Speed",
+  direction_changes: "DirChg",
 };
 
 function colorFromValue(v: number): string {
-  if (v >= 0.6) return '#818cf8'; // accent/indigo
-  if (v >= 0.3) return '#a78bfa'; // lighter purple
-  return '#6b7280'; // gray
+  if (v >= 0.6) return "#818cf8"; // accent/indigo
+  if (v >= 0.3) return "#a78bfa"; // lighter purple
+  return "#6b7280"; // gray
 }
 
 export function Explanations() {
@@ -44,7 +44,7 @@ export function Explanations() {
     ([key, value]) => ({
       name: FEATURE_SHORT[key] || key,
       value: Math.round(value * 100) / 100,
-    })
+    }),
   );
 
   return (
@@ -58,26 +58,29 @@ export function Explanations() {
           </h3>
         </div>
         <ResponsiveContainer width="100%" height={220}>
-          <BarChart data={importanceData} margin={{ top: 5, right: 5, bottom: 5, left: -10 }}>
+          <BarChart
+            data={importanceData}
+            margin={{ top: 5, right: 5, bottom: 5, left: -10 }}
+          >
             <XAxis
               dataKey="name"
-              tick={{ fill: '#9ca3af', fontSize: 10 }}
-              axisLine={{ stroke: '#374151' }}
+              tick={{ fill: "#9ca3af", fontSize: 10 }}
+              axisLine={{ stroke: "#374151" }}
               tickLine={false}
             />
             <YAxis
-              tick={{ fill: '#6b7280', fontSize: 10 }}
+              tick={{ fill: "#6b7280", fontSize: 10 }}
               axisLine={false}
               tickLine={false}
               domain={[0, 1]}
             />
             <Tooltip
               contentStyle={{
-                backgroundColor: '#1f2937',
-                border: '1px solid rgba(255,255,255,0.1)',
-                borderRadius: '8px',
-                fontSize: '12px',
-                color: '#e5e7eb',
+                backgroundColor: "#1f2937",
+                border: "1px solid rgba(255,255,255,0.1)",
+                borderRadius: "8px",
+                fontSize: "12px",
+                color: "#e5e7eb",
               }}
             />
             <Bar dataKey="value" radius={[4, 4, 0, 0]} maxBarSize={32}>
@@ -90,7 +93,7 @@ export function Explanations() {
       </div>
 
       {/* AMNP Diagnostics (conditional) */}
-      {activeModel === 'AMNP' && prediction.extras && (
+      {activeModel === "AMNP" && prediction.extras && (
         <div className="rounded-2xl bg-surface-light/60 backdrop-blur-sm border border-white/5 p-5">
           <div className="flex items-center gap-2 mb-4">
             <Layers size={16} className="text-accent" />
@@ -106,7 +109,10 @@ export function Explanations() {
                 <div className="flex justify-between text-xs mb-1">
                   <span className="text-gray-400">Nonlinear Path</span>
                   <span className="font-mono text-indigo-400">
-                    {(prediction.extras.component_weights.nonlinear_weight * 100).toFixed(1)}%
+                    {(
+                      prediction.extras.component_weights.nonlinear_weight * 100
+                    ).toFixed(1)}
+                    %
                   </span>
                 </div>
                 <div className="h-2 rounded-full bg-surface-lighter overflow-hidden">
@@ -122,7 +128,10 @@ export function Explanations() {
                 <div className="flex justify-between text-xs mb-1">
                   <span className="text-gray-400">Linear Path</span>
                   <span className="font-mono text-violet-400">
-                    {(prediction.extras.component_weights.linear_weight * 100).toFixed(1)}%
+                    {(
+                      prediction.extras.component_weights.linear_weight * 100
+                    ).toFixed(1)}
+                    %
                   </span>
                 </div>
                 <div className="h-2 rounded-full bg-surface-lighter overflow-hidden">

@@ -43,7 +43,9 @@ def main():
 
     # 4. Evaluate on test set
     print("\n▸ Evaluating on test set...")
-    print(f"\n{'Model':<16} {'Train Acc':>10} {'Test Acc':>10} {'F1 Macro':>10} {'Time':>8} {'Epochs':>8}")
+    print(
+        f"\n{'Model':<16} {'Train Acc':>10} {'Test Acc':>10} {'F1 Macro':>10} {'Time':>8} {'Epochs':>8}"
+    )
     print("-" * 65)
 
     for model in models:
@@ -55,15 +57,22 @@ def main():
         n_epochs = len(result["history"]["loss"])
         f1_macro = float(np.mean(test_metrics["f1"]))
 
-        print(f"{model.name:<16} {train_metrics['accuracy']:>10.4f} {test_metrics['accuracy']:>10.4f} "
-              f"{f1_macro:>10.4f} {result['training_time']:>7.2f}s {n_epochs:>8}")
+        print(
+            f"{model.name:<16} {train_metrics['accuracy']:>10.4f} {test_metrics['accuracy']:>10.4f} "
+            f"{f1_macro:>10.4f} {result['training_time']:>7.2f}s {n_epochs:>8}"
+        )
 
     # 5. Save weights
     print("\n▸ Saving model weights...")
     weights_dir = "data/weights"
     os.makedirs(weights_dir, exist_ok=True)
 
-    extensions = {"Perceptron": ".joblib", "SVM": ".joblib", "NeuralNetwork": ".pt", "AMNP": ".pt"}
+    extensions = {
+        "Perceptron": ".joblib",
+        "SVM": ".joblib",
+        "NeuralNetwork": ".pt",
+        "AMNP": ".pt",
+    }
     for model in models:
         ext = extensions[model.name]
         path = os.path.join(weights_dir, f"{model.name.lower()}{ext}")

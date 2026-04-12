@@ -1,4 +1,5 @@
 """Neural Network model implemented in PyTorch with BaseModel interface."""
+
 import numpy as np
 import torch
 import torch.nn as nn
@@ -35,15 +36,21 @@ class NeuralNetModel(BaseModel):
     """
 
     def __init__(self, n_features: int, n_classes: int):
-        super().__init__(name="NeuralNetwork", n_features=n_features, n_classes=n_classes)
+        super().__init__(
+            name="NeuralNetwork", n_features=n_features, n_classes=n_classes
+        )
         self._device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         self._model = _MLP(n_features, n_classes).to(self._device)
         self._criterion = nn.CrossEntropyLoss()
 
-    def train(self, X: np.ndarray, y: np.ndarray, epochs: int = 100, lr: float = 1e-3) -> Dict:
+    def train(
+        self, X: np.ndarray, y: np.ndarray, epochs: int = 100, lr: float = 1e-3
+    ) -> Dict:
         self._model.train()
         optimizer = optim.Adam(self._model.parameters(), lr=lr)
-        scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='min', factor=0.5, patience=5)
+        scheduler = optim.lr_scheduler.ReduceLROnPlateau(
+            optimizer, mode="min", factor=0.5, patience=5
+        )
 
         # Internal validation split (80/20) for early stopping
         n = len(X)
@@ -132,7 +139,9 @@ class NeuralNetModel(BaseModel):
         X_t = torch.tensor(X, dtype=torch.float32, requires_grad=True).to(self._device)
         logits = self._model(X_t)
         predicted_classes = logits.argmax(dim=1)
-        selected_logits = logits[torch.arange(len(predicted_classes)), predicted_classes]
+        selected_logits = logits[
+            torch.arange(len(predicted_classes)), predicted_classes
+        ]
         selected_logits.sum().backward()
 
         gradients = X_t.grad.cpu().numpy()
@@ -143,7 +152,8 @@ class NeuralNetModel(BaseModel):
         torch.save(self._model.state_dict(), path)
 
     def load(self, path: str) -> None:
-        self._model.load_state_dict(torch.load(path, map_location=self._device, weights_only=True))
+        self._model.load_state_dict(
+            torch.load(path, map_location=self._device, weights_only=True)
+        )
         self._model.eval()
         self.is_trained = True
-

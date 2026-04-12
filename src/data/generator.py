@@ -1,4 +1,5 @@
 """Synthetic behavioral telemetry dataset generator for Perceptra."""
+
 import numpy as np
 from typing import Tuple, Dict, Optional
 from .schemas import FEATURE_NAMES, BEHAVIOR_CLASSES, N_FEATURES, N_CLASSES
@@ -10,15 +11,15 @@ from .schemas import FEATURE_NAMES, BEHAVIOR_CLASSES, N_FEATURES, N_CLASSES
 CLASS_DISTRIBUTIONS = {
     "focused": {
         "means": np.array([0.80, 0.10, 0.05, 0.70, 0.90, 0.30, 0.70, 0.10]),
-        "stds":  np.array([0.10, 0.05, 0.03, 0.10, 0.05, 0.10, 0.10, 0.05]),
+        "stds": np.array([0.10, 0.05, 0.03, 0.10, 0.05, 0.10, 0.10, 0.05]),
     },
     "distracted": {
         "means": np.array([0.50, 0.50, 0.30, 0.40, 0.50, 0.60, 0.40, 0.40]),
-        "stds":  np.array([0.20, 0.20, 0.15, 0.20, 0.20, 0.20, 0.25, 0.20]),
+        "stds": np.array([0.20, 0.20, 0.15, 0.20, 0.20, 0.20, 0.25, 0.20]),
     },
     "confused": {
         "means": np.array([0.30, 0.80, 0.60, 0.20, 0.20, 0.70, 0.20, 0.80]),
-        "stds":  np.array([0.15, 0.15, 0.20, 0.15, 0.15, 0.15, 0.15, 0.15]),
+        "stds": np.array([0.15, 0.15, 0.20, 0.15, 0.15, 0.15, 0.15, 0.15]),
     },
 }
 

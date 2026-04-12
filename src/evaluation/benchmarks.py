@@ -1,4 +1,5 @@
 """Inference latency benchmarking for model performance profiling."""
+
 import time
 import numpy as np
 from typing import Dict

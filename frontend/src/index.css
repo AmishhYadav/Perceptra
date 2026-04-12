@@ -8,7 +8,7 @@
   --color-surface-light: #1f2937;
   --color-surface-lighter: #374151;
   --color-accent: #818cf8;
-  --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+  --font-sans: "Inter", system-ui, -apple-system, sans-serif;
 }
 
 @layer base {

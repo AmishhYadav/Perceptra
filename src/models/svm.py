@@ -1,4 +1,5 @@
 """SVM model wrapping scikit-learn's SVC with BaseModel interface."""
+
 import numpy as np
 import joblib
 from sklearn.svm import SVC
@@ -20,7 +21,9 @@ class SVMModel(BaseModel):
         self._X_train = None
         self._y_train = None
 
-    def train(self, X: np.ndarray, y: np.ndarray, epochs: int = 100, lr: float = 0.01) -> Dict:
+    def train(
+        self, X: np.ndarray, y: np.ndarray, epochs: int = 100, lr: float = 0.01
+    ) -> Dict:
         # SVM doesn't have epochs — train once. epochs controls max_iter.
         self._model.max_iter = epochs * 10
         self._model.fit(X, y)
@@ -54,7 +57,10 @@ class SVMModel(BaseModel):
         return {"feature_importance": np.zeros(self.n_features)}
 
     def save(self, path: str) -> None:
-        joblib.dump({"model": self._model, "X_train": self._X_train, "y_train": self._y_train}, path)
+        joblib.dump(
+            {"model": self._model, "X_train": self._X_train, "y_train": self._y_train},
+            path,
+        )
 
     def load(self, path: str) -> None:
         data = joblib.load(path)

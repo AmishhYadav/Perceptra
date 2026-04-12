@@ -1,16 +1,16 @@
-import { useEffect } from 'react';
-import { useInferenceStore } from './store/useInferenceStore';
-import { ControlPanel } from './components/ControlPanel';
-import { PredictionCard } from './components/PredictionCard';
-import { Explanations } from './components/Explanations';
-import { Activity } from 'lucide-react';
+import { useEffect } from "react";
+import { useInferenceStore } from "./store/useInferenceStore";
+import { ControlPanel } from "./components/ControlPanel";
+import { PredictionCard } from "./components/PredictionCard";
+import { Explanations } from "./components/Explanations";
+import { Activity } from "lucide-react";
 
 function App() {
   const connectToModel = useInferenceStore((s) => s.connectToModel);
 
   // Auto-connect to AMNP on mount
   useEffect(() => {
-    connectToModel('AMNP');
+    connectToModel("AMNP");
     return () => {
       useInferenceStore.getState().disconnect();
     };
@@ -26,8 +26,12 @@ function App() {
               <Activity size={20} className="text-accent" />
             </div>
             <div>
-              <h1 className="text-lg font-bold text-gray-100 tracking-tight">Perceptra</h1>
-              <p className="text-[11px] text-gray-500 -mt-0.5">Behavioral Intelligence Dashboard</p>
+              <h1 className="text-lg font-bold text-gray-100 tracking-tight">
+                Perceptra
+              </h1>
+              <p className="text-[11px] text-gray-500 -mt-0.5">
+                Behavioral Intelligence Dashboard
+              </p>
             </div>
           </div>
           <div className="text-xs text-gray-600 font-mono">v0.1.0</div>

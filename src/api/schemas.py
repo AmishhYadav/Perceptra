@@ -1,10 +1,12 @@
 """Pydantic schema contracts for the Perceptra inference API."""
+
 from pydantic import BaseModel as PydanticBase
 from typing import Dict, List, Optional
 
 
 class TelemetryInput(PydanticBase):
     """Raw telemetry payload matching the 8-feature behavioral schema."""
+
     click_frequency: float
     hesitation_time: float
     misclick_rate: float
@@ -20,6 +22,7 @@ class TelemetryInput(PydanticBase):
 
 class PredictionOutput(PydanticBase):
     """Inference result broadcast to the frontend."""
+
     model_name: str
     predicted_class: str
     confidence: float

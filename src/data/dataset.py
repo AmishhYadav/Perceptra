@@ -1,4 +1,5 @@
 """Dataset persistence and loading utilities for Perceptra."""
+
 import numpy as np
 import json
 import os
@@ -39,7 +40,9 @@ class DatasetManager:
             noise_std=noise_std,
             random_seed=random_seed,
         )
-        X_train_raw, X_test_raw, y_train, y_test = gen.generate_split(test_ratio=test_ratio)
+        X_train_raw, X_test_raw, y_train, y_test = gen.generate_split(
+            test_ratio=test_ratio
+        )
 
         # Fit preprocessor on training data only, transform both splits
         X_train = self.preprocessor.fit_transform(X_train_raw)

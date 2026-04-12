@@ -2,6 +2,7 @@
 
 Serves as the single in-memory inference gateway for the Perceptra API.
 """
+
 import numpy as np
 from pathlib import Path
 from typing import Dict

@@ -6,6 +6,7 @@ Combines:
 - Non-linear feature transformation (neural network path)
 - Dynamic weighting between linear and non-linear branches
 """
+
 import numpy as np
 import torch
 import torch.nn as nn
@@ -140,10 +141,14 @@ class AMNPModel(BaseModel):
         self._criterion = AdaptiveMarginLoss(base_margin=1.0)
         self._hidden_dim = hidden_dim
 
-    def train(self, X: np.ndarray, y: np.ndarray, epochs: int = 100, lr: float = 1e-3) -> Dict:
+    def train(
+        self, X: np.ndarray, y: np.ndarray, epochs: int = 100, lr: float = 1e-3
+    ) -> Dict:
         self._model.train()
         optimizer = optim.Adam(self._model.parameters(), lr=lr, weight_decay=1e-4)
-        scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='min', factor=0.5, patience=5)
+        scheduler = optim.lr_scheduler.ReduceLROnPlateau(
+            optimizer, mode="min", factor=0.5, patience=5
+        )
 
         # Internal validation split (80/20) for early stopping
         n = len(X)
@@ -161,7 +166,14 @@ class AMNPModel(BaseModel):
         X_v = torch.tensor(X_val_np, dtype=torch.float32).to(self._device)
         y_v = torch.tensor(y_val_np, dtype=torch.long).to(self._device)
 
-        history = {"loss": [], "accuracy": [], "margin_mean": [], "alpha": [], "val_loss": [], "lr": []}
+        history = {
+            "loss": [],
+            "accuracy": [],
+            "margin_mean": [],
+            "alpha": [],
+            "val_loss": [],
+            "lr": [],
+        }
 
         # Early stopping state
         best_val_loss = float("inf")
@@ -256,7 +268,8 @@ class AMNPModel(BaseModel):
         torch.save(self._model.state_dict(), path)
 
     def load(self, path: str) -> None:
-        self._model.load_state_dict(torch.load(path, map_location=self._device, weights_only=True))
+        self._model.load_state_dict(
+            torch.load(path, map_location=self._device, weights_only=True)
+        )
         self._model.eval()
         self.is_trained = True
-

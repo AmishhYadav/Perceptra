@@ -1,4 +1,5 @@
 """Perceptron model wrapping scikit-learn's Perceptron with BaseModel interface."""
+
 import numpy as np
 import joblib
 from sklearn.linear_model import Perceptron
@@ -19,7 +20,9 @@ class PerceptronModel(BaseModel):
         self._model = Perceptron(max_iter=1, warm_start=True, tol=None)
         self._calibrated = None
 
-    def train(self, X: np.ndarray, y: np.ndarray, epochs: int = 100, lr: float = 0.01) -> Dict:
+    def train(
+        self, X: np.ndarray, y: np.ndarray, epochs: int = 100, lr: float = 0.01
+    ) -> Dict:
         self._model.eta0 = lr
         history = {"loss": [], "accuracy": []}
 
@@ -76,4 +79,3 @@ class PerceptronModel(BaseModel):
         self._model = data["model"]
         self._calibrated = data["calibrated"]
         self.is_trained = True
-

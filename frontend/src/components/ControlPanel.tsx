@@ -1,5 +1,5 @@
-import { ModelSelector } from './ModelSelector';
-import { TelemetrySliders } from './TelemetrySliders';
+import { ModelSelector } from "./ModelSelector";
+import { TelemetrySliders } from "./TelemetrySliders";
 
 export function ControlPanel() {
   return (

@@ -1,5 +1,9 @@
-import { useInferenceStore, AVAILABLE_MODELS, type ModelName } from '../store/useInferenceStore';
-import { Brain, Cpu, CircuitBoard, Zap } from 'lucide-react';
+import {
+  useInferenceStore,
+  AVAILABLE_MODELS,
+  type ModelName,
+} from "../store/useInferenceStore";
+import { Brain, Cpu, CircuitBoard, Zap } from "lucide-react";
 
 const MODEL_ICONS: Record<ModelName, React.ReactNode> = {
   AMNP: <Brain size={18} />,
@@ -9,10 +13,10 @@ const MODEL_ICONS: Record<ModelName, React.ReactNode> = {
 };
 
 const MODEL_LABELS: Record<ModelName, string> = {
-  AMNP: 'AMNP',
-  NeuralNetwork: 'Neural Net',
-  SVM: 'SVM',
-  Perceptron: 'Perceptron',
+  AMNP: "AMNP",
+  NeuralNetwork: "Neural Net",
+  SVM: "SVM",
+  Perceptron: "Perceptron",
 };
 
 export function ModelSelector() {
@@ -37,8 +41,8 @@ export function ModelSelector() {
                 transition-all duration-200 cursor-pointer
                 ${
                   isActive
-                    ? 'bg-accent/20 text-accent ring-1 ring-accent/40 shadow-lg shadow-accent/10'
-                    : 'bg-surface-lighter/50 text-gray-400 hover:bg-surface-lighter hover:text-gray-200'
+                    ? "bg-accent/20 text-accent ring-1 ring-accent/40 shadow-lg shadow-accent/10"
+                    : "bg-surface-lighter/50 text-gray-400 hover:bg-surface-lighter hover:text-gray-200"
                 }
               `}
             >
@@ -51,16 +55,18 @@ export function ModelSelector() {
       <div className="flex items-center gap-2 mt-2">
         <span
           className={`h-2 w-2 rounded-full ${
-            connectionStatus === 'connected'
-              ? 'bg-emerald-400 animate-pulse'
-              : connectionStatus === 'connecting'
-              ? 'bg-amber-400 animate-pulse'
-              : connectionStatus === 'error'
-              ? 'bg-red-400'
-              : 'bg-gray-500'
+            connectionStatus === "connected"
+              ? "bg-emerald-400 animate-pulse"
+              : connectionStatus === "connecting"
+                ? "bg-amber-400 animate-pulse"
+                : connectionStatus === "error"
+                  ? "bg-red-400"
+                  : "bg-gray-500"
           }`}
         />
-        <span className="text-xs text-gray-500 capitalize">{connectionStatus}</span>
+        <span className="text-xs text-gray-500 capitalize">
+          {connectionStatus}
+        </span>
       </div>
     </div>
   );
