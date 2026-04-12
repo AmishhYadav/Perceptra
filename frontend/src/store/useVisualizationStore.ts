@@ -111,8 +111,13 @@ export const useVisualizationStore = create<VisualizationState>((set, get) => ({
   ws: null,
 
   connect: (model: string) => {
-    const { ws } = get();
-    if (ws) ws.close();
+    const { ws: oldWs } = get();
+    if (oldWs) {
+      // Detach onclose handler to prevent it from nullifying the new ws
+      oldWs.onclose = null;
+      oldWs.onmessage = null;
+      oldWs.close();
+    }
 
     set({
       currentModel: model,
@@ -125,71 +130,79 @@ export const useVisualizationStore = create<VisualizationState>((set, get) => ({
       loss: 0,
       accuracyHistory: [],
       lossHistory: [],
+      ws: null,
     });
 
-    const socket = new WebSocket(`${VIS_WS_BASE}/${model}`);
+    // Small delay to let old connection close cleanly on the server side
+    setTimeout(() => {
+      const socket = new WebSocket(`${VIS_WS_BASE}/${model}`);
 
-    socket.onmessage = (event) => {
-      try {
-        const data = JSON.parse(event.data);
+      socket.onmessage = (event) => {
+        try {
+          const data = JSON.parse(event.data);
 
-        if (data.type === "init") {
-          set({
-            points: data.points.map(
-              (p: { x: number; y: number; true_label: number }) => ({
-                x: p.x,
-                y: p.y,
-                trueLabel: p.true_label,
-              }),
-            ),
-            classes: data.classes,
-            xRange: data.x_range,
-            yRange: data.y_range,
-            gridSize: data.grid_size,
-            totalEpochs: data.total_epochs,
-          });
+          if (data.type === "init") {
+            set({
+              points: data.points.map(
+                (p: { x: number; y: number; true_label: number }) => ({
+                  x: p.x,
+                  y: p.y,
+                  trueLabel: p.true_label,
+                }),
+              ),
+              classes: data.classes,
+              xRange: data.x_range,
+              yRange: data.y_range,
+              gridSize: data.grid_size,
+              totalEpochs: data.total_epochs,
+            });
+          }
+
+          if (data.type === "epoch") {
+            const state = get();
+            set({
+              epoch: data.epoch,
+              totalEpochs: data.total_epochs,
+              predictions: data.predictions,
+              accuracy: data.accuracy,
+              loss: data.loss,
+              boundary: data.boundary || state.boundary,
+              accuracyHistory: [...state.accuracyHistory, data.accuracy],
+              lossHistory: [...state.lossHistory, data.loss],
+            });
+          }
+
+          if (data.type === "complete") {
+            set({ playbackState: "complete" });
+          }
+
+          if (data.type === "reset") {
+            set({
+              playbackState: "idle",
+              predictions: [],
+              boundary: null,
+              epoch: 0,
+              accuracy: 0,
+              loss: 0,
+              accuracyHistory: [],
+              lossHistory: [],
+            });
+          }
+        } catch {
+          // ignore bad frames
         }
+      };
 
-        if (data.type === "epoch") {
-          const state = get();
-          set({
-            epoch: data.epoch,
-            totalEpochs: data.total_epochs,
-            predictions: data.predictions,
-            accuracy: data.accuracy,
-            loss: data.loss,
-            boundary: data.boundary || state.boundary,
-            accuracyHistory: [...state.accuracyHistory, data.accuracy],
-            lossHistory: [...state.lossHistory, data.loss],
-          });
+      socket.onclose = () => {
+        // Only null out ws if this is still the current socket
+        const current = get().ws;
+        if (current === socket) {
+          set({ ws: null });
         }
+      };
 
-        if (data.type === "complete") {
-          set({ playbackState: "complete" });
-        }
-
-        if (data.type === "reset") {
-          set({
-            playbackState: "idle",
-            predictions: [],
-            boundary: null,
-            epoch: 0,
-            accuracy: 0,
-            loss: 0,
-            accuracyHistory: [],
-            lossHistory: [],
-          });
-        }
-      } catch {
-        // ignore bad frames
-      }
-    };
-
-    socket.onclose = () => {
-      set({ ws: null });
-    };
-
-    set({ ws: socket });
+      set({ ws: socket });
+    }, 100);
   },
 
   disconnect: () => {
