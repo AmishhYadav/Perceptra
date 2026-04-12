@@ -46,7 +46,7 @@ export const FEATURE_KEYS: (keyof TelemetryInput)[] = [
   'direction_changes',
 ];
 
-const WS_BASE = 'ws://localhost:8000/ws/inference';
+const WS_BASE = import.meta.env.VITE_WS_BASE_URL || 'ws://localhost:8000/ws/inference';
 
 /* ── Store shape ── */
 

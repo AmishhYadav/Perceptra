@@ -1,0 +1,11 @@
+.venv
+.agent
+.planning
+.git
+.gitignore
+frontend
+__pycache__
+*.pyc
+data/plots
+BENCHMARK.md
+evaluate_models.py
