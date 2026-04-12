@@ -45,6 +45,9 @@ class DatasetManager:
         X_train = self.preprocessor.fit_transform(X_train_raw)
         X_test = self.preprocessor.transform(X_test_raw)
 
+        # Persist preprocessor for inference parity
+        self.preprocessor.save(self.data_dir / "preprocessor.joblib")
+
         # Save arrays
         np.save(self.data_dir / "X_train.npy", X_train)
         np.save(self.data_dir / "X_test.npy", X_test)

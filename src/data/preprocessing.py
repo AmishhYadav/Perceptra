@@ -1,5 +1,6 @@
 """Feature preprocessing pipeline for normalizing raw telemetry into model inputs."""
 import numpy as np
+import joblib
 from typing import List, Dict, Optional
 from .schemas import FEATURE_NAMES, N_FEATURES
 
@@ -49,6 +50,18 @@ class FeaturePreprocessor:
         """Fit on X and return the normalized result."""
         return self.fit(X).transform(X)
 
+    def save(self, path: str) -> None:
+        """Persist fitted scaler parameters to disk via joblib."""
+        joblib.dump({"mean": self.mean_, "std": self.std_}, str(path))
+
+    def load(self, path: str) -> "FeaturePreprocessor":
+        """Restore fitted scaler parameters from disk."""
+        data = joblib.load(str(path))
+        self.mean_ = data["mean"]
+        self.std_ = data["std"]
+        self.is_fitted = True
+        return self
+
     @staticmethod
     def from_raw_json(records: List[Dict]) -> np.ndarray:
         """Convert a list of raw telemetry JSON dictionaries into a NumPy feature matrix.
@@ -66,3 +79,4 @@ class FeaturePreprocessor:
             vec = [record.get(name, 0.0) for name in FEATURE_NAMES]
             vectors.append(vec)
         return np.array(vectors, dtype=np.float32)
+
