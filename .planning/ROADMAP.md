@@ -29,30 +29,30 @@
   2. Implement WebSocket endpoints for binary stream tracking.
   3. Connect incoming telemetry arrays to the scaling/normalizing algorithms and model inferencers.
 
-## Phase 5: Client-Side Foundation (React)
-- **Goal**: Stand up the web UI logic for gathering telemetry.
+## Phase 5: Behavioral Intelligence Dashboard (React)
+- **Goal**: Build a unified interactive frontend to simulate telemetry and visualize model states.
 - **Plans**:
-  1. Scaffold Vite/React configuration with Tailwind.
-  2. Implement `requestAnimationFrame` sampling of mouse/scroll hooks.
-  3. Pre-process and batch arrays and wire up WebSocket client.
+  1. Scaffold Vite/React configuration with Tailwind CSS v4.
+  2. Implement Zustand WebSocket store for high-frequency connection management.
+  3. Build the 3-panel layout: Control Panel (Sliders), Prediction Card (Live State), and Explanations (Recharts).
 
-## Phase 6: Core Sandbox UI
-- **Goal**: Create intentional layouts designed to provoke the 3 labels.
+## Phase 6: Formal Evaluation Pipeline
+- **Goal**: Programmatically benchmark all 4 ML models against the synthetic test pool.
 - **Plans**:
-  1. Build a timed action sequence component (tests focus).
-  2. Build a high-noise pop-up interruption component (tests distraction).
-  3. Build a complex multi-step puzzle form (tests confusion).
+  1. Build headless Matplotlib/Seaborn visualizations (Confusion Matrices, ROC curves).
+  2. Write latency tracing logic running 10,000 predict_proba() loops.
+  3. Generate `benchmark.json` and a formatted `BENCHMARK.md` markdown report.
 
-## Phase 7: Visualization Layer (Real-time Feedback)
-- **Goal**: Overlay ML predictions live onto the sandbox environment.
+## Phase 7: Dockerization & Deployment
+- **Goal**: Containerize the full stack for production distribution.
 - **Plans**:
-  1. Establish real-time JSON polling logic for model boundary states.
-  2. Visualize PCA-reduced coordinates on floating canvases over the UI.
-  3. Graph training epochs/curves in a comparative side-chart.
+  1. Write dynamic `.env` and `nginx.conf` routing setups for SPA behaviors.
+  2. Create multi-stage `Dockerfile` templates separating Python weights from Node static exports.
+  3. Orchestrate via `docker-compose.yml` across an overlay bridge network.
 
-## Phase 8: Model Explainability Dashboards
-- **Goal**: Translate abstract vector activations into understandable insights.
+## Phase 8: Documentation & Polish
+- **Goal**: Format the codebase and generate the final open-source artifacts.
 - **Plans**:
-  1. Build radar charts analyzing relative feature significance metrics.
-  2. Expose the "AMNP vs Neural Network" differences explicitly on UI.
-  3. Final system tuning and polishing.
+  1. Run `black` over the Python engine and `prettier` over the TSX components globally.
+  2. Formulate the definitive algorithmic `README.md` containing architectural Mermaid topologies.
+  3. Prepare final artifacts and mark the repository as milestone complete.
