@@ -123,21 +123,21 @@ Evaluated on 3,000 synthetic test samples across 3 behavioral classes:
 
 | Model | Accuracy | Precision | Recall | F1 Macro |
 |-------|----------|-----------|--------|----------|
-| Perceptron | 98.63% | 0.9826 | 0.9803 | 0.9813 |
-| **SVM** | **99.13%** | **0.9889** | **0.9876** | **0.9882** |
-| Neural Network | 98.97% | 0.9866 | 0.9851 | 0.9858 |
-| AMNP | 98.37% | 0.9786 | 0.9765 | 0.9773 |
+| Perceptron | 98.63% | 0.9804 | 0.9823 | 0.9813 |
+| **SVM** | **99.13%** | **0.9878** | **0.9885** | **0.9882** |
+| Neural Network | 98.87% | 0.9840 | 0.9848 | 0.9844 |
+| AMNP | 98.67% | 0.9803 | 0.9831 | 0.9816 |
 
 ### Inference Latency (10,000 runs, batch=10)
 
 | Model | Mean (ms) | P95 (ms) | P99 (ms) |
 |-------|-----------|----------|----------|
-| SVM | 0.201 | 0.217 | 0.229 |
-| **AMNP** | **0.089** | **0.105** | **0.111** |
-| Neural Network | 0.087 | 0.095 | 0.106 |
-| Perceptron | 0.508 | 0.536 | 0.564 |
+| SVM | 0.204 | 0.213 | 0.220 |
+| **AMNP** | **0.093** | **0.109** | **0.111** |
+| Neural Network | 0.085 | 0.092 | 0.098 |
+| Perceptron | 0.523 | 0.539 | 0.550 |
 
-> **Key Insight**: AMNP achieves near-identical latency to the vanilla Neural Network (0.089ms vs 0.087ms) while providing built-in explainability through adaptive margins and dual-path component weights — a capability none of the baseline models offer.
+> **Key Insight**: AMNP achieves near-identical latency to the vanilla Neural Network (0.093ms vs 0.085ms) while providing built-in explainability through adaptive margins and dual-path component weights — a capability none of the baseline models offer. With v2 generalization enhancements (hybrid loss, dropout, softplus margins, asymmetric alpha), AMNP accuracy improved from 98.37% to **98.67%**, closing the gap with the Neural Network to within 0.2pp.
 
 ---
 
