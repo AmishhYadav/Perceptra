@@ -52,8 +52,17 @@ def _make_boundary_grid(pca: PCA, model, x_range, y_range):
     # Inverse transform back to original 8D space
     grid_8d = pca.inverse_transform(grid_2d).astype(np.float32)
 
+    # Clamp to reasonable range to prevent overflow in model predictions
+    grid_8d = np.clip(grid_8d, -10.0, 10.0)
+    grid_8d = np.nan_to_num(grid_8d, nan=0.0, posinf=10.0, neginf=-10.0)
+
     # Get class probabilities for each grid cell
-    probas = model.predict_proba(grid_8d)  # (GRID_SIZE^2, 3)
+    try:
+        probas = model.predict_proba(grid_8d)  # (GRID_SIZE^2, 3)
+        probas = np.nan_to_num(probas, nan=1.0 / N_CLASSES)
+    except Exception:
+        # Fallback: uniform probabilities
+        probas = np.full((GRID_SIZE * GRID_SIZE, N_CLASSES), 1.0 / N_CLASSES)
 
     return probas.tolist()
 
