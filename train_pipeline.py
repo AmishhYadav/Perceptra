@@ -39,7 +39,7 @@ def main():
     # 3. Train all models (parallel)
     print("\n▸ Training all models in parallel...")
     trainer = ModelTrainer(models)
-    results = trainer.train_all(X_train, y_train, epochs=200, lr=1e-3, verbose=True)
+    results = trainer.train_all(X_train, y_train, epochs=300, lr=1e-3, verbose=True)
 
     # 4. Evaluate on test set
     print("\n▸ Evaluating on test set...")

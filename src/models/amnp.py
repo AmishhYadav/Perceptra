@@ -5,6 +5,12 @@ Combines:
 - Margin-based learning (adaptive hinge loss)
 - Non-linear feature transformation (neural network path)
 - Dynamic weighting between linear and non-linear branches
+
+Generalization enhancements (v2):
+- Dropout regularization in the non-linear transform path
+- Hybrid loss: AdaptiveMarginLoss + λ·CrossEntropyLoss for smooth gradients
+- Softplus-activated margin net (unbounded positive margins)
+- Asymmetric alpha initialisation favoring the non-linear path
 """
 
 import numpy as np
@@ -65,32 +71,40 @@ class _AMNPNetwork(nn.Module):
         Combined = α * non-linear + (1-α) * linear
     """
 
-    def __init__(self, n_features: int, n_classes: int, hidden_dim: int = 48):
+    def __init__(self, n_features: int, n_classes: int, hidden_dim: int = 64):
         super().__init__()
 
         # Feature Transformation Layer (non-linear path)
+        # Improvement 1: Dropout regularization to reduce overfitting
         self.transform = nn.Sequential(
             nn.Linear(n_features, hidden_dim),
             nn.BatchNorm1d(hidden_dim),
             nn.ReLU(),
+            nn.Dropout(0.1),
             nn.Linear(hidden_dim, hidden_dim),
             nn.ReLU(),
+            nn.Dropout(0.1),
         )
 
         # Adaptive Margin Layer — produces per-sample margin adjustments
         self.margin_base = nn.Parameter(torch.tensor(1.0))
+        # Improvement 3: Softplus activation — unbounded positive margins
+        # allow the network to learn larger separations when data requires it
         self.margin_net = nn.Sequential(
             nn.Linear(hidden_dim, 16),
             nn.ReLU(),
             nn.Linear(16, 1),
-            nn.Sigmoid(),  # bounds adjustment to [0, 1]
+            nn.Softplus(),  # unbounded positive output (replaces Sigmoid)
         )
 
         # Decision Layer (linear classification on transformed features)
         self.decision = nn.Linear(hidden_dim, n_classes)
 
         # Dynamic weighting between linear and non-linear paths
-        self.alpha = nn.Parameter(torch.tensor(0.5))
+        # Improvement 4: Asymmetric init — sigmoid(1.4) ≈ 0.80, favoring
+        # the non-linear path early so deep features can develop before
+        # the linear path regularises the decision surface
+        self.alpha = nn.Parameter(torch.tensor(1.4))
 
         # Linear path (perceptron-style direct classification)
         self.linear_path = nn.Linear(n_features, n_classes)
@@ -134,11 +148,14 @@ class AMNPModel(BaseModel):
     input complexity.
     """
 
-    def __init__(self, n_features: int, n_classes: int, hidden_dim: int = 48):
+    def __init__(self, n_features: int, n_classes: int, hidden_dim: int = 64):
         super().__init__(name="AMNP", n_features=n_features, n_classes=n_classes)
         self._device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         self._model = _AMNPNetwork(n_features, n_classes, hidden_dim).to(self._device)
-        self._criterion = AdaptiveMarginLoss(base_margin=1.0)
+        self._margin_criterion = AdaptiveMarginLoss(base_margin=1.0)
+        # Improvement 2: Hybrid loss — smooth CE gradients + interpretable margins
+        self._ce_criterion = nn.CrossEntropyLoss()
+        self._ce_lambda = 1.0  # equal blending weight for cross-entropy component
         self._hidden_dim = hidden_dim
 
     def train(
@@ -179,13 +196,16 @@ class AMNPModel(BaseModel):
         best_val_loss = float("inf")
         best_state = None
         patience_counter = 0
-        patience = 10
+        patience = 15
 
         for epoch in range(epochs):
             self._model.train()
             optimizer.zero_grad()
             logits, margins, _ = self._model(X_t)
-            loss = self._criterion(logits, y_t, margins)
+            # Hybrid loss: margin-based + cross-entropy for smooth gradients
+            margin_loss = self._margin_criterion(logits, y_t, margins)
+            ce_loss = self._ce_criterion(logits, y_t)
+            loss = margin_loss + self._ce_lambda * ce_loss
             loss.backward()
 
             # Critical: gradient clipping to prevent explosion
@@ -201,7 +221,13 @@ class AMNPModel(BaseModel):
             self._model.eval()
             with torch.no_grad():
                 val_logits, val_margins, _ = self._model(X_v)
-                val_loss = self._criterion(val_logits, y_v, val_margins).item()
+                val_margin_loss = self._margin_criterion(
+                    val_logits, y_v, val_margins
+                )
+                val_ce_loss = self._ce_criterion(val_logits, y_v)
+                val_loss = (
+                    val_margin_loss + self._ce_lambda * val_ce_loss
+                ).item()
 
             scheduler.step(val_loss)
 
