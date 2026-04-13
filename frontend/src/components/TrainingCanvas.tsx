@@ -37,6 +37,8 @@ export function TrainingCanvas({ width = 640, height = 520 }: Props) {
   const showPredictions = useVisualizationStore((s) => s.showPredictions);
   const showBoundary = useVisualizationStore((s) => s.showBoundary);
   const epoch = useVisualizationStore((s) => s.epoch);
+  const xAxisLabel = useVisualizationStore((s) => s.xAxisLabel);
+  const yAxisLabel = useVisualizationStore((s) => s.yAxisLabel);
 
   /* ── Coordinate transforms ── */
   const toCanvasX = useCallback(
@@ -178,16 +180,36 @@ export function TrainingCanvas({ width = 640, height = 520 }: Props) {
        ctx.beginPath(); ctx.moveTo(originX, 0); ctx.lineTo(originX, height); ctx.stroke();
     }
 
-    // Axis labels
-    ctx.fillStyle = "rgba(255,255,255,0.6)";
+    // Axis labels — use real feature names from the server
+    ctx.fillStyle = "rgba(255,255,255,0.7)";
     ctx.font = "bold 13px Inter, sans-serif";
-    ctx.fillText("Principal Component X (PCA1)", width / 2 - 90, height - 16);
+    const xLabel = xAxisLabel || "Feature X";
+    const yLabel = yAxisLabel || "Feature Y";
+    ctx.fillText(xLabel, width / 2 - ctx.measureText(xLabel).width / 2, height - 12);
     
     ctx.save();
-    ctx.translate(24, height / 2 + 100);
+    ctx.translate(18, height / 2 + ctx.measureText(yLabel).width / 2);
     ctx.rotate(-Math.PI / 2);
-    ctx.fillText("Principal Component Y (PCA2)", 0, 0);
+    ctx.fillText(yLabel, 0, 0);
     ctx.restore();
+
+    // Draw tick values along X axis
+    ctx.fillStyle = "rgba(255,255,255,0.35)";
+    ctx.font = "10px Inter, sans-serif";
+    const tickCountX = 5;
+    for (let i = 0; i <= tickCountX; i++) {
+      const frac = i / tickCountX;
+      const val = xRange[0] + frac * (xRange[1] - xRange[0]);
+      const tx = frac * width;
+      ctx.fillText(val.toFixed(2), tx - 12, height - 28);
+    }
+    // Draw tick values along Y axis
+    for (let i = 0; i <= tickCountX; i++) {
+      const frac = i / tickCountX;
+      const val = yRange[0] + frac * (yRange[1] - yRange[0]);
+      const ty = height - frac * height;
+      ctx.fillText(val.toFixed(2), 36, ty + 3);
+    }
 
     // Draw boundary heatmap
     if (showBoundary && boundary) {
@@ -213,6 +235,10 @@ export function TrainingCanvas({ width = 640, height = 520 }: Props) {
     showPredictions,
     showBoundary,
     epoch,
+    xAxisLabel,
+    yAxisLabel,
+    xRange,
+    yRange,
     width,
     height,
     drawBoundary,

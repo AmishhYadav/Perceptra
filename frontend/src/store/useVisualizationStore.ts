@@ -44,6 +44,8 @@ interface VisualizationState {
   xRange: [number, number];
   yRange: [number, number];
   gridSize: number;
+  xAxisLabel: string;
+  yAxisLabel: string;
 
   // Per-model state
   currentModel: string;
@@ -89,6 +91,8 @@ export const useVisualizationStore = create<VisualizationState>((set, get) => ({
   xRange: [-4, 4],
   yRange: [-4, 4],
   gridSize: 50,
+  xAxisLabel: "Click Frequency",
+  yAxisLabel: "Hesitation Time",
 
   currentModel: "AMNP",
   predictions: [],
@@ -130,6 +134,8 @@ export const useVisualizationStore = create<VisualizationState>((set, get) => ({
       loss: 0,
       accuracyHistory: [],
       lossHistory: [],
+      xAxisLabel: "Click Frequency",
+      yAxisLabel: "Hesitation Time",
       ws: null,
     });
 
@@ -155,6 +161,8 @@ export const useVisualizationStore = create<VisualizationState>((set, get) => ({
               yRange: data.y_range,
               gridSize: data.grid_size,
               totalEpochs: data.total_epochs,
+              xAxisLabel: data.x_axis_label || "Click Frequency",
+              yAxisLabel: data.y_axis_label || "Hesitation Time",
             });
           }
 

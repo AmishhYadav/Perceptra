@@ -1,121 +1,195 @@
-import { useInferenceStore } from "../store/useInferenceStore";
-import { Loader } from "lucide-react";
+import {
+  useInferenceStore,
+  AVAILABLE_MODELS,
+  type ModelName,
+  type PredictionOutput,
+} from "../store/useInferenceStore";
 
 const STATE_CONFIG = {
   focused: {
     label: "Focused",
-    glow: "rgba(102,221,139,0.3)", // primary
-    bar: "from-primary to-primary-container shadow-[0_0_20px_rgba(102,221,139,0.4)]",
-    textClass: "text-transparent bg-clip-text bg-gradient-to-br from-primary to-primary-container",
-    valueClass: "text-primary",
-    bgAccent: "bg-primary"
+    barColor: "bg-primary-container",
+    textClass: "text-primary-container",
+    probBg: "bg-primary-container",
   },
   distracted: {
     label: "Distracted",
-    glow: "rgba(255,191,0,0.3)", // secondary container (amber)
-    bar: "from-secondary-container to-secondary shadow-[0_0_20px_rgba(255,191,0,0.4)]",
-    textClass: "text-transparent bg-clip-text bg-gradient-to-br from-secondary-container to-secondary",
-    valueClass: "text-secondary-container",
-    bgAccent: "bg-secondary-container"
+    barColor: "bg-secondary",
+    textClass: "text-secondary",
+    probBg: "bg-secondary",
   },
   confused: {
     label: "Confused",
-    glow: "rgba(255,180,171,0.3)", // error
-    bar: "from-error to-error-container shadow-[0_0_20px_rgba(255,180,171,0.4)]",
-    textClass: "text-transparent bg-clip-text bg-gradient-to-br from-error to-error-container",
-    valueClass: "text-error",
-    bgAccent: "bg-error"
+    barColor: "bg-error",
+    textClass: "text-error",
+    probBg: "bg-error",
   },
 };
 
-export function PredictionCard() {
-  const prediction = useInferenceStore((s) => s.currentPrediction);
-  const connectionStatus = useInferenceStore((s) => s.connectionStatus);
+const MODEL_LABELS: Record<ModelName, string> = {
+  AMNP: "AMNP",
+  NeuralNetwork: "Neural Net",
+  SVM: "SVM",
+  Perceptron: "Perceptron",
+};
 
-  if (connectionStatus !== "connected" || !prediction) {
-    return (
-      <div className="rounded-[2rem] bg-[rgba(45,52,73,0.6)] backdrop-blur-xl border-t border-l border-outline-variant/20 p-8 md:p-12 relative flex flex-col items-center justify-center min-h-[400px]">
-        <Loader size={32} className="text-on-surface-variant animate-spin mb-4" />
-        <p className="text-sm font-bold uppercase tracking-widest text-on-surface-variant">
-          {connectionStatus === "connected"
-            ? "Awaiting Telemetry Stream…"
-            : "Connect to a model to begin"}
-        </p>
-      </div>
-    );
-  }
+const MODEL_ICONS: Record<ModelName, string> = {
+  AMNP: "psychology",
+  NeuralNetwork: "neurology",
+  SVM: "bolt",
+  Perceptron: "memory",
+};
 
+/* ── Single model mini-card ── */
+function ModelMiniCard({
+  prediction,
+  modelName,
+  isActive,
+  onSelect,
+}: {
+  prediction: PredictionOutput;
+  modelName: ModelName;
+  isActive: boolean;
+  onSelect: () => void;
+}) {
   const config = STATE_CONFIG[prediction.predicted_class];
   const confidencePercent = (prediction.confidence * 100).toFixed(1);
 
   return (
-    <div className="rounded-[2rem] bg-[rgba(45,52,73,0.6)] backdrop-blur-xl border-t border-l border-outline-variant/20 p-8 md:p-12 relative overflow-hidden flex flex-col justify-center min-h-[400px]">
-      {/* Decorative Glow Background */}
-      <div className="absolute -top-24 -right-24 w-64 h-64 bg-primary/10 blur-[100px] rounded-full"></div>
-      <div className="absolute -bottom-24 -left-24 w-64 h-64 bg-tertiary/10 blur-[100px] rounded-full"></div>
-      
+    <button
+      onClick={onSelect}
+      className={`
+        relative rounded-lg p-6 text-left transition-all duration-300 cursor-pointer group
+        bg-white border overflow-hidden
+        hover:shadow-md hover:-translate-y-0.5
+        ${
+          isActive
+            ? "border-primary-container/30 shadow-sm"
+            : "border-outline-variant/10 hover:border-outline-variant/30"
+        }
+      `}
+    >
+      {/* Active indicator */}
+      {isActive && (
+        <div className="absolute top-3 right-3 w-2 h-2 rounded-full bg-primary-container animate-pulse" />
+      )}
+
       <div className="relative z-10">
-        <div className="flex items-center gap-3 mb-6">
-          <span className="bg-primary/10 text-primary px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest">
-            {prediction.model_name}
-          </span>
-          <span className="text-on-surface-variant text-[10px] font-medium uppercase tracking-widest">
-            Live Stream
-          </span>
-        </div>
-        
-        <h2 className="text-on-surface-variant text-sm font-bold uppercase tracking-[0.2em] mb-2">
-          Detected Behavioral State
-        </h2>
-        
-        <div className="flex items-baseline gap-4 mb-8">
-          <span 
-            className={`text-6xl md:text-8xl font-black ${config.textClass}`}
-            style={{ filter: `drop-shadow(0 0 15px ${config.glow})` }}
+        {/* Model Header */}
+        <div className="flex items-center gap-2 mb-4">
+          <span
+            className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[9px] font-black uppercase tracking-widest ${
+              isActive
+                ? "bg-primary-container/10 text-primary-container"
+                : "bg-surface-container-highest text-secondary"
+            }`}
           >
-            {config.label}
+            <span className="material-symbols-outlined" style={{ fontSize: 14 }}>
+              {MODEL_ICONS[modelName]}
+            </span>
+            {MODEL_LABELS[modelName]}
           </span>
-          <div className="flex flex-col ml-4">
-            <span className={`text-3xl font-bold tabular-nums ${config.valueClass}`}>
-              {confidencePercent}%
-            </span>
-            <span className="text-[10px] font-black text-on-surface-variant uppercase tracking-widest">
-              Confidence
-            </span>
-          </div>
         </div>
 
-        {/* Confidence Progress Bar */}
-        <div className="w-full h-4 bg-surface-container-lowest rounded-full overflow-hidden mb-12 flex">
-          <div 
-            className={`h-full bg-gradient-to-r ${config.bar} transition-all duration-300`} 
+        {/* Predicted Class */}
+        <div className={`text-3xl font-headline italic mb-1 ${config.textClass}`}>
+          {config.label}
+        </div>
+
+        {/* Confidence */}
+        <div className="flex items-baseline gap-2 mb-4">
+          <span className={`text-xl font-bold tabular-nums ${config.textClass}`}>
+            {confidencePercent}%
+          </span>
+          <span className="text-[9px] font-bold text-secondary uppercase tracking-widest">
+            confidence
+          </span>
+        </div>
+
+        {/* Confidence Bar */}
+        <div className="w-full h-2 bg-surface-container-highest rounded-full overflow-hidden mb-4">
+          <div
+            className={`h-full ${config.barColor} transition-all duration-300`}
             style={{ width: `${prediction.confidence * 100}%` }}
           />
         </div>
 
-        {/* Probability Readouts Layout */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        {/* Mini probability breakdown */}
+        <div className="flex gap-3">
           {Object.entries(prediction.probabilities).map(([cls, prob]) => {
             const pConfig = STATE_CONFIG[cls as keyof typeof STATE_CONFIG];
-            const probPercent = (prob * 100).toFixed(1);
             return (
-              <div key={cls} className="p-4 bg-white/5 rounded-2xl border-l-4 border-transparent hover:border-surface-variant transition-colors" style={{ borderLeftColor: cls === prediction.predicted_class ? 'var(--color-primary)' : 'transparent' }}>
-                <p className="text-[10px] font-black text-on-surface-variant uppercase tracking-widest mb-1">
-                   {cls}
-                </p>
-                <div className="flex justify-between items-end">
-                  <span className="text-lg font-bold text-on-surface">Probability</span>
-                  <span className={`text-sm font-medium tabular-nums ${pConfig.valueClass}`}>
-                    {probPercent}%
+              <div key={cls} className="flex-1 min-w-0">
+                <div className="flex justify-between items-baseline mb-1">
+                  <span className="text-[8px] font-bold text-secondary uppercase tracking-tight truncate">
+                    {cls.slice(0, 3)}
+                  </span>
+                  <span className={`text-[10px] font-bold tabular-nums ${pConfig.textClass}`}>
+                    {(prob * 100).toFixed(0)}%
                   </span>
                 </div>
-                <div className="w-full h-1 bg-surface-container-lowest mt-2 rounded-full overflow-hidden">
-                  <div className={`h-full ${pConfig.bgAccent} transition-all duration-300`} style={{ width: `${prob * 100}%` }}></div>
+                <div className="w-full h-1 bg-surface-container-highest rounded-full overflow-hidden">
+                  <div
+                    className={`h-full ${pConfig.probBg} transition-all duration-300`}
+                    style={{ width: `${prob * 100}%` }}
+                  />
                 </div>
               </div>
             );
           })}
         </div>
+      </div>
+    </button>
+  );
+}
+
+/* ── Main Comparison Grid ── */
+export function PredictionCard() {
+  const allPredictions = useInferenceStore((s) => s.allPredictions);
+  const activeModel = useInferenceStore((s) => s.activeModel);
+  const setActiveModel = useInferenceStore((s) => s.setActiveModel);
+  const connectionStatus = useInferenceStore((s) => s.connectionStatus);
+
+  if (connectionStatus !== "connected" || !allPredictions) {
+    return (
+      <div className="rounded-lg bg-surface-container-high p-12 flex flex-col items-center justify-center min-h-[300px]">
+        <span className="material-symbols-outlined text-secondary text-4xl mb-4 animate-spin">
+          progress_activity
+        </span>
+        <p className="text-sm font-bold uppercase tracking-widest text-secondary">
+          {connectionStatus === "connected"
+            ? "Awaiting Telemetry Stream…"
+            : "Connecting to all models…"}
+        </p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <h4 className="font-headline text-3xl italic text-primary">
+          Precision Slates
+        </h4>
+        <span className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-secondary">
+          <span className="w-2 h-2 bg-primary-container rounded-full animate-pulse" />
+          4 models active
+        </span>
+      </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {AVAILABLE_MODELS.map((modelName) => {
+          const prediction = allPredictions[modelName];
+          if (!prediction) return null;
+          return (
+            <ModelMiniCard
+              key={modelName}
+              prediction={prediction}
+              modelName={modelName}
+              isActive={modelName === activeModel}
+              onSelect={() => setActiveModel(modelName)}
+            />
+          );
+        })}
       </div>
     </div>
   );

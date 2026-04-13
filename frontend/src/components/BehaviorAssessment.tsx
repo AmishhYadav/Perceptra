@@ -15,8 +15,6 @@ const SPAWN_INTERVAL_MS = 1200;
 const TARGET_LIFETIME_MS = 2800;
 const MAX_TARGETS = 5;
 const TARGET_RADIUS = 32;
-const GOOD_COLOR = "var(--color-primary)"; // #66dd8b
-const DECOY_COLOR = "var(--color-error)"; // #ffb4ab
 const DECOY_CHANCE = 0.2;
 
 interface GameTarget {
@@ -107,7 +105,7 @@ export function BehaviorAssessment() {
     telemetryTimerRef.current = setInterval(() => {
       const snap = engine.getSnapshot();
       setLastSnapshot(snap);
-      if (connectionStatus === "connected") {
+      if (connectionStatus === "connected" && phase === "playing") {
         sendTelemetry(snap as TelemetryInput);
       }
     }, 100);
@@ -134,18 +132,21 @@ export function BehaviorAssessment() {
 
   /* ── End game ── */
   const endGame = useCallback(() => {
-    clearInterval(spawnTimerRef.current);
-    clearInterval(gameTimerRef.current);
-    clearInterval(telemetryTimerRef.current);
+    // 1. Immediately stop all timers to prevent any more telemetry frames
+    if (spawnTimerRef.current) clearInterval(spawnTimerRef.current);
+    if (gameTimerRef.current) clearInterval(gameTimerRef.current);
+    if (telemetryTimerRef.current) clearInterval(telemetryTimerRef.current);
     if (animFrameRef.current) cancelAnimationFrame(animFrameRef.current);
+    
+    // 2. Capture and send the FINAL high-fidelity snapshot
+    const finalSnap = engineRef.current.getSnapshot();
+    setLastSnapshot(finalSnap);
+    if (connectionStatus === "connected") {
+      sendTelemetry(finalSnap as TelemetryInput);
+    }
+
     setPhase("finished");
     setTargets([]);
-
-    const snap = engineRef.current.getSnapshot();
-    setLastSnapshot(snap);
-    if (connectionStatus === "connected") {
-      sendTelemetry(snap as TelemetryInput);
-    }
   }, [connectionStatus, sendTelemetry]);
 
   /* ── Input Handlers ── */
@@ -190,19 +191,19 @@ export function BehaviorAssessment() {
     <div className="flex flex-col gap-6 w-full h-full">
       {/* Top Scoreboard (Stitch styled) */}
       <section className="w-full flex justify-between items-center gap-6">
-        <div className="flex flex-col items-center flex-1 py-4 bg-[rgba(45,52,73,0.6)] backdrop-blur-xl border-t border-l border-outline-variant/20 rounded-xl shadow-[0_0_40px_rgba(102,221,139,0.1)]">
-          <span className="text-on-surface-variant text-[10px] uppercase font-bold tracking-[0.2em] mb-1">
+        <div className="flex flex-col items-center flex-1 py-4 bg-surface-container-high rounded-xl border border-outline-variant/10">
+          <span className="text-secondary text-[10px] uppercase font-bold tracking-[0.2em] mb-1">
             Session Timer
           </span>
-          <div className="text-5xl md:text-6xl font-black text-primary tabular-nums tracking-tighter drop-shadow-[0_0_15px_rgba(102,221,139,0.4)]">
+          <div className="text-5xl md:text-6xl font-headline italic text-primary tabular-nums tracking-tighter">
             {timeLeft}s
           </div>
         </div>
-        <div className="flex flex-col items-center flex-1 py-4 bg-[rgba(45,52,73,0.6)] backdrop-blur-xl border-t border-l border-outline-variant/20 rounded-xl">
-          <span className="text-on-surface-variant text-[10px] uppercase font-bold tracking-[0.2em] mb-1">
+        <div className="flex flex-col items-center flex-1 py-4 bg-surface-container-high rounded-xl border border-outline-variant/10">
+          <span className="text-secondary text-[10px] uppercase font-bold tracking-[0.2em] mb-1">
             Accumulated Score
           </span>
-          <div className="text-5xl md:text-6xl font-black text-on-surface tabular-nums tracking-tighter">
+          <div className="text-5xl md:text-6xl font-headline italic text-on-surface tabular-nums tracking-tighter">
             {score}
           </div>
         </div>
@@ -211,11 +212,11 @@ export function BehaviorAssessment() {
       {/* Central Game Arena */}
       <section
         ref={containerRef}
-        className="flex-1 w-full relative bg-surface-container-lowest rounded-2xl overflow-hidden shadow-inner border border-outline-variant/10 min-h-[420px]"
+        className="flex-1 w-full relative bg-surface-container-low rounded-2xl overflow-hidden shadow-sm border border-outline-variant/10 min-h-[420px]"
         style={{
           cursor: phase === "playing" ? "crosshair" : "default",
           backgroundSize: "40px 40px",
-          backgroundImage: "linear-gradient(to right, rgba(69, 70, 82, 0.1) 1px, transparent 1px), linear-gradient(to bottom, rgba(69, 70, 82, 0.1) 1px, transparent 1px)"
+          backgroundImage: "linear-gradient(to right, rgba(114, 121, 116, 0.1) 1px, transparent 1px), linear-gradient(to bottom, rgba(114, 121, 116, 0.1) 1px, transparent 1px)"
         }}
         onClick={handleBackgroundClick}
         onMouseMove={handleMouseMove}
@@ -223,19 +224,19 @@ export function BehaviorAssessment() {
       >
         {/* Idle UI */}
         {phase === "idle" && (
-          <div className="absolute inset-0 flex flex-col items-center justify-center gap-6 bg-surface-container-lowest/80 backdrop-blur-sm z-10">
+          <div className="absolute inset-0 flex flex-col items-center justify-center gap-6 bg-surface-container-low/90 backdrop-blur-sm z-10">
             <div className="relative">
-              <div className="h-24 w-24 rounded-full bg-primary/10 flex items-center justify-center animate-pulse">
+              <div className="h-24 w-24 rounded-full bg-primary-container/10 flex items-center justify-center animate-pulse">
                 <Target size={48} className="text-primary" />
               </div>
-              <div className="absolute -inset-4 rounded-full border border-primary/20 animate-ping duration-1000" />
+              <div className="absolute -inset-4 rounded-full border border-primary-container/20 animate-ping duration-1000" />
             </div>
             <div className="text-center max-w-md px-6">
-              <h2 className="text-2xl font-bold text-on-surface mb-3 tracking-tight">
+              <h2 className="text-2xl font-headline italic text-primary mb-3 tracking-tight">
                 Focus Zone Assessment
               </h2>
-              <p className="text-sm text-on-surface-variant leading-relaxed">
-                Click the <span className="text-primary font-bold">green targets</span> as they appear. 
+              <p className="text-sm text-secondary leading-relaxed">
+                Click the <span className="text-primary-container font-bold">green targets</span> as they appear. 
                 Avoid the <span className="text-error font-bold">red decoys</span>. 
                 We'll analyze your interaction patterns to determine your cognitive state.
               </p>
@@ -243,7 +244,7 @@ export function BehaviorAssessment() {
             <button
               onClick={startGame}
               disabled={connectionStatus !== "connected"}
-              className="flex items-center gap-2 px-8 py-3 rounded-xl bg-gradient-to-r from-primary to-primary-container text-on-primary font-black uppercase tracking-widest hover:scale-105 active:scale-95 transition-all shadow-lg shadow-primary/20 disabled:opacity-50 disabled:grayscale"
+              className="flex items-center gap-2 px-8 py-3 rounded-lg bg-primary-container text-white font-bold uppercase tracking-widest hover:scale-105 active:scale-95 transition-all shadow-sm disabled:opacity-50 disabled:grayscale"
             >
               <Play size={18} />
               Start Protocol
@@ -258,12 +259,12 @@ export function BehaviorAssessment() {
 
         {/* Finished UI */}
         {phase === "finished" && (
-          <div className="absolute inset-0 flex flex-col items-center justify-center gap-6 bg-[rgba(11,19,38,0.85)] backdrop-blur-md z-10">
-            <Zap size={48} className="text-primary animate-bounce shadow-[0_0_30px_rgba(102,221,139,0.5)] rounded-full" />
-            <h2 className="text-3xl font-black text-on-surface tracking-tighter uppercase">
+          <div className="absolute inset-0 flex flex-col items-center justify-center gap-6 bg-surface-container-low/95 backdrop-blur-md z-10">
+            <Zap size={48} className="text-primary-container animate-bounce" />
+            <h2 className="text-3xl font-headline italic text-primary tracking-tighter">
               Assessment Complete
             </h2>
-            <div className="grid grid-cols-3 gap-10 mt-4 bg-surface-container-high/50 p-6 rounded-2xl border border-white/5">
+            <div className="grid grid-cols-3 gap-10 mt-4 bg-white p-6 rounded-lg border border-outline-variant/10 shadow-sm">
               <div className="text-center">
                 <div className="text-4xl font-black tabular-nums text-on-surface">{score}</div>
                 <div className="text-[10px] text-on-surface-variant uppercase font-bold tracking-widest mt-2">Total Score</div>
@@ -279,7 +280,7 @@ export function BehaviorAssessment() {
             </div>
             <button
               onClick={startGame}
-              className="mt-6 flex items-center gap-2 px-6 py-3 rounded-xl bg-surface-container-highest text-on-surface hover:text-primary font-bold uppercase tracking-widest hover:bg-surface-bright active:scale-95 transition-all outline outline-1 outline-outline-variant/30"
+              className="mt-6 flex items-center gap-2 px-6 py-3 rounded-lg bg-primary-container text-white font-bold uppercase tracking-widest hover:opacity-90 active:scale-95 transition-all cursor-pointer"
             >
               <RotateCcw size={18} />
               Recalibrate
@@ -308,28 +309,28 @@ export function BehaviorAssessment() {
             }}
           >
             {/* Soft Glow Underlay */}
-            <div className={`absolute inset-0 rounded-full blur-xl transition-all ${target.isDecoy ? 'bg-error/20' : 'bg-primary/20 group-hover:bg-primary/30'}`} />
+            <div className={`absolute inset-0 rounded-full blur-xl transition-all ${target.isDecoy ? 'bg-error/20' : 'bg-primary-container/20 group-hover:bg-primary-container/30'}`} />
             
             {/* Pulsing ring */}
-            <div className={`w-full h-full rounded-full border-2 ${target.isDecoy ? 'border-error/40' : 'border-primary/40 animate-[pulse_1s_ease-in-out_infinite]'}`} />
+            <div className={`w-full h-full rounded-full border-2 ${target.isDecoy ? 'border-error/40' : 'border-primary-container/40 animate-[pulse_1s_ease-in-out_infinite]'}`} />
             
             {/* Inner bounding ring */}
-            <div className={`absolute rounded-full border ${target.isDecoy ? 'border-error/60' : 'border-primary/60'}`} style={{width: TARGET_RADIUS * 1.5, height: TARGET_RADIUS * 1.5}} />
+            <div className={`absolute rounded-full border ${target.isDecoy ? 'border-error/60' : 'border-primary-container/60'}`} style={{width: TARGET_RADIUS * 1.5, height: TARGET_RADIUS * 1.5}} />
             
             {/* Core dot */}
-            <div className={`absolute rounded-full shadow-[0_0_15px] ${target.isDecoy ? 'bg-error shadow-error' : 'bg-primary shadow-primary'}`} style={{width: target.isDecoy ? 12 : 8, height: target.isDecoy ? 12 : 8}} />
+            <div className={`absolute rounded-full shadow-[0_0_15px] ${target.isDecoy ? 'bg-error shadow-error' : 'bg-primary-container shadow-primary-container'}`} style={{width: target.isDecoy ? 12 : 8, height: target.isDecoy ? 12 : 8}} />
           </button>
         ))}
 
         {/* Live Indicator Overlay */}
-        <div className="absolute bottom-6 left-6 flex items-center gap-2 bg-surface/80 backdrop-blur-md px-4 py-2 rounded-full border border-outline-variant/20 z-10 transition-opacity" style={{opacity: phase === 'playing' ? 1 : 0}}>
-          <div className="w-2 h-2 bg-primary rounded-full animate-[pulse_1s_ease-in-out_infinite]"></div>
-          <span className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">Live Analytics Feed</span>
+        <div className="absolute bottom-6 left-6 flex items-center gap-2 bg-white/80 backdrop-blur-md px-4 py-2 rounded-full border border-outline-variant/20 z-10 transition-opacity" style={{opacity: phase === 'playing' ? 1 : 0}}>
+          <div className="w-2 h-2 bg-primary-container rounded-full animate-[pulse_1s_ease-in-out_infinite]"></div>
+          <span className="text-[10px] font-bold uppercase tracking-widest text-secondary">Live Analytics Feed</span>
         </div>
       </section>
 
       {/* Bottom Telemetry Strip (Stitch styled 8-grid) */}
-      <section className="w-full bg-[rgba(45,52,73,0.6)] backdrop-blur-xl border-t border-l border-outline-variant/20 rounded-xl p-6 transition-all duration-300 min-h-[96px]">
+      <section className="w-full bg-surface-container-high rounded-xl p-6 transition-all duration-300 min-h-[96px] border border-outline-variant/10">
         {lastSnapshot ? (
           <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-6">
             <TelemetryMetric label="Click Freq" value={lastSnapshot.click_frequency} suffix="/s" />
@@ -355,18 +356,17 @@ export function BehaviorAssessment() {
 // Helper component for the Stitch Telemetry metrics
 function TelemetryMetric({ label, value, isPercent = false, suffix = "", alertThreshold = 1.0 }: { label: string, value: number, isPercent?: boolean, suffix?: string, alertThreshold?: number }) {
   const isAlert = value >= alertThreshold;
-  const colorClass = isAlert ? "bg-error text-error shadow-error/40" : "bg-primary text-primary shadow-primary/40";
   
   return (
     <div className="flex flex-col gap-2">
       <div className="flex justify-between items-baseline gap-2">
         <span className="text-[9px] font-bold text-on-surface-variant uppercase tracking-tighter truncate">{label}</span>
-        <span className={`text-xs font-bold tabular-nums ${isAlert ? 'text-error' : 'text-primary'}`}>
+        <span className={`text-xs font-bold tabular-nums ${isAlert ? 'text-error' : 'text-primary-container'}`}>
           {isPercent ? `${(value * 100).toFixed(0)}%` : `${value.toFixed(2)}${suffix}`}
         </span>
       </div>
       <div className="h-1 w-full bg-surface-container rounded-full overflow-hidden">
-        <div className={`h-full ${isAlert ? 'bg-error' : 'bg-primary'} transition-all duration-300`} style={{ width: `${value * 100}%` }}></div>
+        <div className={`h-full ${isAlert ? 'bg-error' : 'bg-primary-container'} transition-all duration-300`} style={{ width: `${value * 100}%` }}></div>
       </div>
     </div>
   );

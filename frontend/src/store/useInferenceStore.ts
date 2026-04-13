@@ -1,9 +1,9 @@
 /**
  * Zustand store for real-time WebSocket inference state.
  *
- * Manages the active model, WebSocket lifecycle, outgoing telemetry,
- * and incoming prediction results — all in a single flat store that
- * components can subscribe to with fine-grained selectors.
+ * Connects to the /ws/inference/all endpoint and receives predictions
+ * from ALL 4 models simultaneously on every telemetry frame.
+ * Components can subscribe with fine-grained selectors.
  */
 import { create } from "zustand";
 
@@ -57,23 +57,31 @@ const WS_BASE =
 /* ── Store shape ── */
 
 interface InferenceState {
+  /** The model highlighted for detail view (Explanations panel) */
   activeModel: ModelName;
   connectionStatus: "disconnected" | "connecting" | "connected" | "error";
+  /** Predictions from ALL models, keyed by model name */
+  allPredictions: Record<ModelName, PredictionOutput> | null;
+  /** Legacy single-model accessor for components that only need the active one */
   currentPrediction: PredictionOutput | null;
   ws: WebSocket | null;
 
-  connectToModel: (model: ModelName) => void;
+  /** Connect a single WebSocket to /ws/inference/all */
+  connectAll: () => void;
   disconnect: () => void;
   sendTelemetry: (payload: TelemetryInput) => void;
+  /** Switch which model is highlighted in the detail panel */
+  setActiveModel: (model: ModelName) => void;
 }
 
 export const useInferenceStore = create<InferenceState>((set, get) => ({
   activeModel: "AMNP",
   connectionStatus: "disconnected",
+  allPredictions: null,
   currentPrediction: null,
   ws: null,
 
-  connectToModel: (model: ModelName) => {
+  connectAll: () => {
     // Tear down existing connection
     const { ws } = get();
     if (ws) {
@@ -81,12 +89,12 @@ export const useInferenceStore = create<InferenceState>((set, get) => ({
     }
 
     set({
-      activeModel: model,
       connectionStatus: "connecting",
+      allPredictions: null,
       currentPrediction: null,
     });
 
-    const socket = new WebSocket(`${WS_BASE}/${model}`);
+    const socket = new WebSocket(`${WS_BASE}/all`);
 
     socket.onopen = () => {
       set({ connectionStatus: "connected", ws: socket });
@@ -94,9 +102,15 @@ export const useInferenceStore = create<InferenceState>((set, get) => ({
 
     socket.onmessage = (event) => {
       try {
-        const data: PredictionOutput = JSON.parse(event.data);
-        if (data.predicted_class) {
-          set({ currentPrediction: data });
+        const data = JSON.parse(event.data);
+        // Check it's a multi-model response (has model name keys)
+        if (data.AMNP || data.NeuralNetwork || data.SVM || data.Perceptron) {
+          const allPreds = data as Record<ModelName, PredictionOutput>;
+          const { activeModel } = get();
+          set({
+            allPredictions: allPreds,
+            currentPrediction: allPreds[activeModel] || null,
+          });
         }
       } catch {
         // ignore malformed frames
@@ -121,6 +135,7 @@ export const useInferenceStore = create<InferenceState>((set, get) => ({
     set({
       ws: null,
       connectionStatus: "disconnected",
+      allPredictions: null,
       currentPrediction: null,
     });
   },
@@ -130,5 +145,13 @@ export const useInferenceStore = create<InferenceState>((set, get) => ({
     if (ws && connectionStatus === "connected") {
       ws.send(JSON.stringify(payload));
     }
+  },
+
+  setActiveModel: (model: ModelName) => {
+    const { allPredictions } = get();
+    set({
+      activeModel: model,
+      currentPrediction: allPredictions ? allPredictions[model] || null : null,
+    });
   },
 }));

@@ -1,4 +1,10 @@
-"""WebSocket route for real-time training visualization with PCA-reduced data."""
+"""WebSocket route for real-time training visualization with explainable PCA.
+
+Instead of arbitrary axes, PCA projects the 8D behavioral clusters onto an
+interpretable 2D subspace. We extract the strongest numerical feature loadings
+from the PCA components to dynamically name the axes for the end-user (e.g.,
+"Hesitation Time vs Movement Smoothness").
+"""
 
 import json
 import asyncio
@@ -7,7 +13,12 @@ from pathlib import Path
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 from sklearn.decomposition import PCA
 
-from src.data.schemas import BEHAVIOR_CLASSES, N_FEATURES, N_CLASSES
+from src.data.schemas import (
+    BEHAVIOR_CLASSES,
+    FEATURE_NAMES,
+    N_FEATURES,
+    N_CLASSES,
+)
 from src.models import PerceptronModel, SVMModel, NeuralNetModel, AMNPModel
 
 router = APIRouter()
@@ -17,6 +28,19 @@ MAX_POINTS = 400
 GRID_SIZE = 50
 DEFAULT_EPOCHS = 100
 DEFAULT_DELAY_MS = 80
+
+
+def _get_axis_label(component: np.ndarray) -> str:
+    """Extract interpretable feature name labels from a PCA component."""
+    loadings = np.abs(component)
+    top2_idx = np.argsort(loadings)[-2:][::-1]
+    
+    label_parts = []
+    for idx in top2_idx:
+        feat = FEATURE_NAMES[idx].replace("_", " ").title()
+        label_parts.append(feat)
+        
+    return " vs ".join(label_parts)
 
 
 def _load_pca_data():
@@ -34,16 +58,24 @@ def _load_pca_data():
         X_sub = X_train
         y_sub = y_train
 
-    # Fit PCA on the full training set for stable axes
+    # Fit PCA on the full training set for stable axes preserving original covariance
     pca = PCA(n_components=2)
     pca.fit(X_train)
 
     X_2d = pca.transform(X_sub)
-    return X_sub, y_sub, X_2d, pca
+    
+    x_label = f"Composite ({_get_axis_label(pca.components_[0])})"
+    y_label = f"Composite ({_get_axis_label(pca.components_[1])})"
+
+    return X_sub, y_sub, X_2d, pca, x_label, y_label
 
 
 def _make_boundary_grid(pca: PCA, model, x_range, y_range):
-    """Sample a grid in 2D PCA space, inverse-transform to 8D, predict probabilities."""
+    """Sample a grid in 2D PCA space, inverse-transform to 8D, predict probabilities.
+    
+    This geometrically maps 2D coordinates back into the full 8D feature space using
+    the natural covariance profile of the data so all classes are fairly evaluated.
+    """
     xs = np.linspace(x_range[0], x_range[1], GRID_SIZE)
     ys = np.linspace(y_range[0], y_range[1], GRID_SIZE)
     xx, yy = np.meshgrid(xs, ys)
@@ -52,16 +84,15 @@ def _make_boundary_grid(pca: PCA, model, x_range, y_range):
     # Inverse transform back to original 8D space
     grid_8d = pca.inverse_transform(grid_2d).astype(np.float32)
 
-    # Clamp to reasonable range to prevent overflow in model predictions
+    # Clamp to prevent math overflow since PCA spaces are theoretically infinite
     grid_8d = np.clip(grid_8d, -10.0, 10.0)
     grid_8d = np.nan_to_num(grid_8d, nan=0.0, posinf=10.0, neginf=-10.0)
 
-    # Get class probabilities for each grid cell
     try:
-        probas = model.predict_proba(grid_8d)  # (GRID_SIZE^2, 3)
+        probas = model.predict_proba(grid_8d)
         probas = np.nan_to_num(probas, nan=1.0 / N_CLASSES)
     except Exception:
-        # Fallback: uniform probabilities
+        # Fallback
         probas = np.full((GRID_SIZE * GRID_SIZE, N_CLASSES), 1.0 / N_CLASSES)
 
     return probas.tolist()
@@ -82,40 +113,28 @@ def _create_model(model_name: str):
 
 @router.websocket("/visualization/{model_name}")
 async def visualization_ws(websocket: WebSocket, model_name: str):
-    """WebSocket endpoint for streaming training visualization frames.
-
-    Sends PCA-reduced scatter data and decision boundary grids epoch-by-epoch.
-
-    Client can send control messages:
-        {"action": "start"}
-        {"action": "pause"}
-        {"action": "resume"}
-        {"action": "speed", "value": 50}  (ms between epochs)
-        {"action": "reset"}
-    """
+    """WebSocket endpoint for streaming training visualization frames."""
     await websocket.accept()
 
-    # Validate model
     valid_models = ["Perceptron", "SVM", "NeuralNetwork", "AMNP"]
     if model_name not in valid_models:
         await websocket.send_json({"error": f"Unknown model: {model_name}"})
         await websocket.close()
         return
 
-    # Load and PCA-reduce data
     try:
-        X_sub, y_sub, X_2d, pca = _load_pca_data()
+        X_sub, y_sub, X_2d, pca, x_axis_label, y_axis_label = _load_pca_data()
     except FileNotFoundError as e:
         await websocket.send_json({"error": f"Dataset not found: {e}"})
         await websocket.close()
         return
 
     # Compute axis ranges with padding
-    pad = 0.5
+    pad = 0.08
     x_range = [float(X_2d[:, 0].min() - pad), float(X_2d[:, 0].max() + pad)]
     y_range = [float(X_2d[:, 1].min() - pad), float(X_2d[:, 1].max() + pad)]
 
-    # Send initial data frame with scatter points
+    # Send initial data frame
     init_frame = {
         "type": "init",
         "model_name": model_name,
@@ -132,10 +151,11 @@ async def visualization_ws(websocket: WebSocket, model_name: str):
         "y_range": y_range,
         "grid_size": GRID_SIZE,
         "total_epochs": DEFAULT_EPOCHS,
+        "x_axis_label": x_axis_label,
+        "y_axis_label": y_axis_label,
     }
     await websocket.send_json(init_frame)
 
-    # Playback state
     playing = False
     paused = False
     delay_ms = DEFAULT_DELAY_MS
@@ -143,7 +163,6 @@ async def visualization_ws(websocket: WebSocket, model_name: str):
 
     try:
         while True:
-            # Wait for client commands
             raw = await websocket.receive_text()
             try:
                 msg = json.loads(raw)
@@ -174,16 +193,13 @@ async def visualization_ws(websocket: WebSocket, model_name: str):
                 playing = True
                 paused = False
 
-                # Create fresh model
                 current_model = _create_model(model_name)
                 if current_model is None:
-                    await websocket.send_json({"error": "Failed to create model"})
                     continue
 
-                # Run training in epoch loop
                 if model_name == "SVM":
-                    # SVM: simulate progressive training with data subsets
-                    steps = 20
+                    # Fix applied: SVM now simulates exactly 100 epoch steps to match others
+                    steps = DEFAULT_EPOCHS
                     for step in range(1, steps + 1):
                         if not playing:
                             break
@@ -200,15 +216,7 @@ async def visualization_ws(websocket: WebSocket, model_name: str):
                                 elif ctrl_msg.get("action") == "pause":
                                     paused = True
                                 elif ctrl_msg.get("action") == "speed":
-                                    delay_ms = max(
-                                        20,
-                                        min(
-                                            500,
-                                            int(
-                                                ctrl_msg.get("value", DEFAULT_DELAY_MS)
-                                            ),
-                                        ),
-                                    )
+                                    delay_ms = max(20, min(500, int(ctrl_msg.get("value", DEFAULT_DELAY_MS))))
                                 elif ctrl_msg.get("action") == "reset":
                                     playing = False
                                     await websocket.send_json({"type": "reset"})
@@ -218,16 +226,19 @@ async def visualization_ws(websocket: WebSocket, model_name: str):
                         if not playing:
                             break
 
-                        # Progressive subset training
+                        # Progressive subset training for simulation
                         frac = step / steps
                         n_use = max(20, int(len(X_sub) * frac))
                         current_model = _create_model(model_name)
+                        # We use 100 max_iter inside train method
                         current_model.train(
                             X_sub[:n_use], y_sub[:n_use], epochs=100, lr=0.01
                         )
 
                         preds = current_model.predict(X_sub)
                         acc = float(np.mean(preds == y_sub))
+                        
+                        # Use resilient PCA grid inverse transform
                         boundary = _make_boundary_grid(
                             pca, current_model, x_range, y_range
                         )
@@ -269,13 +280,7 @@ async def visualization_ws(websocket: WebSocket, model_name: str):
                             if ctrl_msg.get("action") == "pause":
                                 paused = True
                             elif ctrl_msg.get("action") == "speed":
-                                delay_ms = max(
-                                    20,
-                                    min(
-                                        500,
-                                        int(ctrl_msg.get("value", DEFAULT_DELAY_MS)),
-                                    ),
-                                )
+                                delay_ms = max(20, min(500, int(ctrl_msg.get("value", DEFAULT_DELAY_MS))))
                             elif ctrl_msg.get("action") == "reset":
                                 playing = False
                                 await websocket.send_json({"type": "reset"})
@@ -294,15 +299,7 @@ async def visualization_ws(websocket: WebSocket, model_name: str):
                                 elif ctrl_msg.get("action") == "pause":
                                     paused = True
                                 elif ctrl_msg.get("action") == "speed":
-                                    delay_ms = max(
-                                        20,
-                                        min(
-                                            500,
-                                            int(
-                                                ctrl_msg.get("value", DEFAULT_DELAY_MS)
-                                            ),
-                                        ),
-                                    )
+                                    delay_ms = max(20, min(500, int(ctrl_msg.get("value", DEFAULT_DELAY_MS))))
                                 elif ctrl_msg.get("action") == "reset":
                                     playing = False
                                     await websocket.send_json({"type": "reset"})
@@ -312,13 +309,13 @@ async def visualization_ws(websocket: WebSocket, model_name: str):
                         if not playing:
                             break
 
-                        # Train one epoch
+                        # Train one epoch piecewise
                         current_model.train(X_sub, y_sub, epochs=1, lr=1e-3)
 
                         preds = current_model.predict(X_sub)
                         acc = float(np.mean(preds == y_sub))
 
-                        # Compute boundary every 2 epochs for performance
+                        # Compute PCA boundary grid dynamically occasionally for perf
                         boundary = None
                         if epoch % 2 == 0 or epoch == 1 or epoch == total_epochs:
                             boundary_data = _make_boundary_grid(
@@ -331,7 +328,6 @@ async def visualization_ws(websocket: WebSocket, model_name: str):
                                 "probabilities": boundary_data,
                             }
 
-                        # Get loss from training history
                         loss = 0.0
                         if hasattr(current_model, "training_history"):
                             hist = current_model.training_history

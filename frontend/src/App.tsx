@@ -6,162 +6,226 @@ import { Explanations } from "./components/Explanations";
 import { VisualPlayground } from "./components/VisualPlayground";
 import { BehaviorAssessment } from "./components/BehaviorAssessment";
 import { LandingPage } from "./components/LandingPage";
-import { Activity, LayoutDashboard, BrainCircuit, Settings2 } from "lucide-react";
 
-type Tab = "landing" | "dashboard" | "visual" | "settings";
+type Tab = "landing" | "telemetry" | "playground" | "settings";
 
 function App() {
   const [activeTab, setActiveTab] = useState<Tab>("landing");
-  const connectToModel = useInferenceStore((s) => s.connectToModel);
+  const connectAll = useInferenceStore((s) => s.connectAll);
   const connectionStatus = useInferenceStore((s) => s.connectionStatus);
 
-  // Auto-connect to AMNP on mount
+  // Auto-connect to all models on mount
   useEffect(() => {
-    connectToModel("AMNP");
+    connectAll();
     return () => {
       useInferenceStore.getState().disconnect();
     };
-  }, [connectToModel]);
+  }, [connectAll]);
 
   if (activeTab === "landing") {
-    return <LandingPage onLaunch={() => setActiveTab("dashboard")} />;
+    return <LandingPage onLaunch={() => setActiveTab("telemetry")} />;
   }
 
   return (
     <>
-      <header className="fixed top-0 w-full z-50 bg-[#0b1326]/80 backdrop-blur-xl flex justify-between items-center px-6 h-16">
-        <div className="flex items-center gap-4">
-          <div className="text-xl font-bold tracking-tighter text-[#dae2fd]">Perceptra</div>
-          <div className="h-6 w-[1px] bg-[#131b2e]"></div>
-          <div className="flex items-center gap-2">
-            <span
-              className={`w-2 h-2 rounded-full shadow-[0_0_8px_currentColor] ${
-                connectionStatus === "connected" ? "bg-primary shadow-primary/80" : "bg-error shadow-error/80"
-              }`}
-            ></span>
-            <span
-              className={`text-[10px] font-bold uppercase tracking-widest ${
-                connectionStatus === "connected" ? "text-primary" : "text-error"
-              }`}
-            >
-              {connectionStatus}
-            </span>
-          </div>
+      {/* ── Sidebar Navigation ── */}
+      <aside className="h-screen w-72 fixed left-0 top-0 bg-surface-container-low flex flex-col p-6 gap-2 z-50">
+        <div className="mb-8 px-4">
+          <h1 className="font-headline text-xl italic text-primary-container">
+            Perceptra
+          </h1>
+          <p className="text-xs text-secondary font-label tracking-tight">
+            Behavioral Intelligence
+          </p>
         </div>
-        <div className="flex items-center gap-6">
-          <div className="hidden md:flex gap-8 items-center text-[11px] font-bold uppercase tracking-widest">
-            <button
-              onClick={() => setActiveTab("dashboard")}
-              className={`transition-colors cursor-pointer ${
-                activeTab === "dashboard" ? "text-primary" : "text-on-surface-variant hover:text-on-surface"
-              }`}
-            >
-              Telemetry
-            </button>
-            <button
-              onClick={() => setActiveTab("visual")}
-              className={`transition-colors cursor-pointer ${
-                activeTab === "visual" ? "text-primary" : "text-on-surface-variant hover:text-on-surface"
-              }`}
-            >
-              Playground
-            </button>
-            <button
-              onClick={() => setActiveTab("settings")}
-              className={`transition-colors cursor-pointer ${
-                activeTab === "settings" ? "text-primary" : "text-on-surface-variant hover:text-on-surface"
-              }`}
-            >
-              Settings
-            </button>
-          </div>
-          <div className="w-8 h-8 rounded-full overflow-hidden border border-outline-variant/30 bg-surface-container-high flex items-center justify-center">
-             <Activity size={16} className="text-primary"/>
-          </div>
-        </div>
-      </header>
 
-      {/* NavigationDrawer (Desktop Only) */}
-      <aside className="hidden lg:flex h-full w-64 fixed left-0 top-0 bg-[#131b2e] flex-col py-8 px-4 z-40 shadow-[40px_0_40px_-20px_rgba(11,19,38,0.4)] mt-16">
-        <div className="text-on-surface font-black mb-10 px-2 tracking-wide uppercase text-sm">ML Console</div>
-        <nav className="flex flex-col space-y-2">
+        <nav className="flex flex-col gap-1">
+          {/* Telemetry */}
           <button
-            onClick={() => setActiveTab("dashboard")}
-            className={`flex items-center gap-3 py-3 px-4 rounded-lg transition-all duration-300 cursor-pointer ${
-              activeTab === "dashboard"
-                ? "text-primary border-l-4 border-primary bg-gradient-to-r from-primary/10 to-transparent"
-                : "text-on-surface-variant opacity-70 hover:text-on-surface hover:bg-surface-container-highest"
+            onClick={() => setActiveTab("telemetry")}
+            className={`flex items-center gap-3 px-4 py-3 transition-all cursor-pointer ${
+              activeTab === "telemetry"
+                ? "bg-white text-primary-container rounded-lg shadow-sm font-semibold translate-x-1"
+                : "text-secondary hover:bg-white/50"
             }`}
           >
-            <LayoutDashboard size={18} />
-            <span className="font-['Inter'] tabular-nums uppercase tracking-widest text-[11px] font-bold">Telemetry</span>
-          </button>
-          
-          <button
-            onClick={() => setActiveTab("visual")}
-            className={`flex items-center gap-3 py-3 px-4 rounded-lg transition-all duration-300 cursor-pointer ${
-              activeTab === "visual"
-                ? "text-primary border-l-4 border-primary bg-gradient-to-r from-primary/10 to-transparent"
-                : "text-on-surface-variant opacity-70 hover:text-on-surface hover:bg-surface-container-highest"
-            }`}
-          >
-            <BrainCircuit size={18} />
-            <span className="font-['Inter'] tabular-nums uppercase tracking-widest text-[11px] font-bold">Playground</span>
+            <span className="material-symbols-outlined">analytics</span>
+            <span className="font-label">Telemetry</span>
           </button>
 
+          {/* ML Playground */}
+          <button
+            onClick={() => setActiveTab("playground")}
+            className={`flex items-center gap-3 px-4 py-3 transition-all cursor-pointer ${
+              activeTab === "playground"
+                ? "bg-white text-primary-container rounded-lg shadow-sm font-semibold translate-x-1"
+                : "text-secondary hover:bg-white/50"
+            }`}
+          >
+            <span className="material-symbols-outlined">science</span>
+            <span className="font-label">ML Playground</span>
+          </button>
+
+          {/* Settings */}
           <button
             onClick={() => setActiveTab("settings")}
-            className={`flex items-center gap-3 py-3 px-4 rounded-lg transition-all duration-300 cursor-pointer ${
+            className={`flex items-center gap-3 px-4 py-3 transition-all cursor-pointer ${
               activeTab === "settings"
-                ? "text-primary border-l-4 border-primary bg-gradient-to-r from-primary/10 to-transparent"
-                : "text-on-surface-variant opacity-70 hover:text-on-surface hover:bg-surface-container-highest"
+                ? "bg-white text-primary-container rounded-lg shadow-sm font-semibold translate-x-1"
+                : "text-secondary hover:bg-white/50"
             }`}
           >
-            <Settings2 size={18} />
-            <span className="font-['Inter'] tabular-nums uppercase tracking-widest text-[11px] font-bold">Settings</span>
+            <span className="material-symbols-outlined">settings</span>
+            <span className="font-label">Settings</span>
           </button>
         </nav>
+
+        <div className="mt-auto pt-6 border-t border-outline-variant/10">
+          <button
+            onClick={() => setActiveTab("landing")}
+            className="w-full bg-primary-container text-white py-3 rounded-lg font-medium text-sm flex items-center justify-center gap-2 hover:opacity-90 transition-opacity cursor-pointer"
+          >
+            <span className="material-symbols-outlined">home</span>
+            Back to Home
+          </button>
+          <div className="flex items-center gap-3 mt-6 px-2">
+            <div className="w-8 h-8 rounded-full bg-surface-container-highest flex items-center justify-center">
+              <span className="material-symbols-outlined text-primary text-sm">person</span>
+            </div>
+            <div className="flex flex-col">
+              <span className="text-xs font-bold">Analyst</span>
+              <span className="text-[10px] text-secondary">System User</span>
+            </div>
+          </div>
+        </div>
       </aside>
 
-      <main className="lg:pl-64 pt-24 pb-32 px-6 md:px-12 w-full">
-        {activeTab === "dashboard" && (
-          <div className="flex flex-col gap-12">
-             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
-               <div>
-                 <h1 className="text-3xl font-extrabold tracking-tight text-on-surface mb-1">Interactive Observation</h1>
-                 <p className="text-on-surface-variant text-sm font-medium">Real-time inference stream from behavioral clusters.</p>
-               </div>
-               <div className="flex items-center gap-4 bg-[rgba(45,52,73,0.6)] backdrop-blur-xl border border-white/5 p-1.5 rounded-xl">
-                 <span className="text-[10px] font-bold uppercase tracking-tighter text-on-surface-variant px-3">Active Inference Model:</span>
-                 {/* ModelSelector wrapped to look like Stitch header dropdown */}
-                 <ControlPanel />
-               </div>
-             </div>
-             
-             {/* 1. The massive, full-width Assessment Arena */}
-             <div className="w-full">
-                <BehaviorAssessment />
-             </div>
-
-             {/* 2. The Dashboard Metrics row */}
-             <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-               <div className="lg:col-span-6">
-                  <PredictionCard />
-               </div>
-               <div className="lg:col-span-6">
-                  <Explanations />
-               </div>
-             </div>
+      {/* ── Main Content ── */}
+      <main className="ml-72 flex flex-col min-h-screen">
+        {/* Sticky Header */}
+        <header className="sticky top-0 w-full glass-panel z-40 flex justify-between items-center px-12 py-8">
+          <div className="flex flex-col">
+            <h2 className="font-headline text-4xl text-primary leading-none -tracking-tight">
+              {activeTab === "telemetry"
+                ? "Telemetry Evolution"
+                : activeTab === "playground"
+                  ? "ML Visual Playground"
+                  : "Settings"}
+            </h2>
+            <p className="text-secondary font-label text-sm mt-2">
+              {activeTab === "telemetry"
+                ? "Real-time behavioral assessment & model inference"
+                : activeTab === "playground"
+                  ? "Training visualization & latent space exploration"
+                  : "System configuration"}
+            </p>
           </div>
-        )}
-        
-        {activeTab === "visual" && (
-          <VisualPlayground />
-        )}
+          <div className="flex items-center gap-12">
+            <div className="text-right">
+              <p className="text-[10px] uppercase tracking-widest text-secondary font-semibold">
+                Connection
+              </p>
+              <p className="font-headline text-xl text-primary flex items-center gap-2 justify-end">
+                <span
+                  className={`w-2 h-2 rounded-full ${
+                    connectionStatus === "connected"
+                      ? "bg-primary-container animate-pulse"
+                      : connectionStatus === "connecting"
+                        ? "bg-secondary animate-pulse"
+                        : "bg-error"
+                  }`}
+                />
+                <span className="text-sm font-label capitalize">
+                  {connectionStatus}
+                </span>
+              </p>
+            </div>
+            <div className="w-12 h-12 flex items-center justify-center bg-surface-container-highest rounded-full">
+              <span className="material-symbols-outlined text-primary">
+                wifi_tethering
+              </span>
+            </div>
+          </div>
+        </header>
 
-        {activeTab === "settings" && (
-           <div className="text-on-surface-variant">Settings coming soon...</div>
-        )}
+        {/* Telemetry Tab */}
+        <div
+          className="px-12 pb-20"
+          style={{ display: activeTab === "telemetry" ? "block" : "none" }}
+        >
+          <div className="flex gap-12">
+            {/* Central Intelligence Grid */}
+            <div className="flex-1 space-y-12">
+              {/* Focus Assessment Game */}
+              <section className="relative">
+                <BehaviorAssessment />
+              </section>
+
+              {/* Model Comparison Grid */}
+              <section>
+                <PredictionCard />
+              </section>
+
+              {/* Feature Importance / Diagnostics */}
+              <section>
+                <Explanations />
+              </section>
+            </div>
+
+            {/* Right Sidebar: Model Selector & Telemetry Logs */}
+            <aside className="w-96 flex flex-col gap-8">
+              <div className="bg-white rounded-lg p-8 shadow-sm border border-outline-variant/10">
+                <h3 className="font-headline text-2xl mb-6">Model Detail</h3>
+                <ControlPanel />
+              </div>
+            </aside>
+          </div>
+        </div>
+
+        {/* Playground Tab */}
+        <div
+          className="px-12 pb-20"
+          style={{ display: activeTab === "playground" ? "block" : "none" }}
+        >
+          <VisualPlayground />
+        </div>
+
+        {/* Settings Tab */}
+        <div
+          className="px-12 pb-20"
+          style={{ display: activeTab === "settings" ? "block" : "none" }}
+        >
+          <div className="bg-white rounded-lg p-12 shadow-sm border border-outline-variant/10 mt-8">
+            <h3 className="font-headline text-3xl italic text-primary mb-4">
+              Configuration
+            </h3>
+            <p className="text-secondary text-sm">
+              Settings panel coming soon. WebSocket endpoint, model
+              configuration, and telemetry tuning options will appear here.
+            </p>
+          </div>
+        </div>
+
+        {/* Footer */}
+        <footer className="w-full py-12 mt-auto bg-primary-container flex flex-col items-center justify-center gap-6 px-8">
+          <h2 className="font-headline italic text-white text-2xl">
+            Perceptra
+          </h2>
+          <div className="flex gap-8">
+            <span className="text-outline-variant text-sm font-sans tracking-wide">
+              Privacy Policy
+            </span>
+            <span className="text-outline-variant text-sm font-sans tracking-wide">
+              Security
+            </span>
+            <span className="text-outline-variant text-sm font-sans tracking-wide">
+              API Docs
+            </span>
+          </div>
+          <p className="text-outline-variant text-xs font-sans mt-4 opacity-50">
+            © 2026 Perceptra. Behavioral Intelligence.
+          </p>
+        </footer>
       </main>
     </>
   );

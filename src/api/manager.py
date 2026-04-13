@@ -102,6 +102,62 @@ class ModelManager:
 
         return result
 
+    def get_all_predictions(self, telemetry: Dict[str, float]) -> Dict[str, Dict]:
+        """Run inference on ALL models for the same telemetry payload.
+
+        Preprocesses once, then predicts with every loaded model.
+        """
+        # Detect "Idle" state: if no movement, no clicks, no scroll, no dwell.
+        # This prevents "End of Game" silence from being classified as "Distracted".
+        is_idle = all(
+            telemetry.get(f, 0.0) == 0.0 
+            for f in ["click_frequency", "navigation_speed", "scroll_depth"]
+        )
+
+        # Convert dict → numpy array and preprocess once
+        raw = np.array(
+            [[telemetry.get(f, 0.0) for f in FEATURE_NAMES]], dtype=np.float32
+        )
+        X = self.preprocessor.transform(raw)
+
+        results = {}
+        for model_name, model in self.models.items():
+            proba = model.predict_proba(X)[0]
+            pred_idx = int(np.argmax(proba))
+            pred_class = BEHAVIOR_CLASSES[pred_idx]
+            confidence = float(proba[pred_idx])
+            
+            # Override for idle if necessary (optional - let's see if we need it)
+            # if is_idle:
+            #     pred_class = "focused" # or maintain last state if we had a stateful manager
+
+            explanation = model.explain(X)
+            importance = explanation.get("feature_importance", np.zeros(N_FEATURES))
+
+            result = {
+                "model_name": model_name,
+                "predicted_class": pred_class,
+                "confidence": confidence,
+                "is_idle": is_idle,
+                "probabilities": {
+                    BEHAVIOR_CLASSES[i]: float(proba[i]) for i in range(N_CLASSES)
+                },
+                "feature_importance": {
+                    FEATURE_NAMES[i]: float(importance[i]) for i in range(N_FEATURES)
+                },
+            }
+
+            # AMNP-specific extras
+            if model_name == "AMNP":
+                result["extras"] = {
+                    "component_weights": explanation.get("component_weights", {}),
+                    "mean_margin": explanation.get("mean_margin", 0.0),
+                }
+
+            results[model_name] = result
+
+        return results
+
     def list_models(self):
         """Return available model names."""
         return list(self.models.keys())

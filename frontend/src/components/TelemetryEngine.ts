@@ -42,7 +42,6 @@ export class TelemetryEngine {
   private totalClicks = 0;
   private missClicks = 0;
   private scrollAccum = 0;
-  private containerHeight = 1;
 
   // --- Cursor tracking ---
   private samples: CursorSample[] = [];
@@ -53,8 +52,6 @@ export class TelemetryEngine {
   private hoverDurations: number[] = [];
   private isOverTarget = false;
 
-  // --- Timing ---
-  private startTime = 0;
 
   reset() {
     this.clickTimes = [];
@@ -67,12 +64,10 @@ export class TelemetryEngine {
     this.hoverStartTime = 0;
     this.hoverDurations = [];
     this.isOverTarget = false;
-    this.startTime = performance.now();
   }
 
-  start(containerHeight: number) {
+  start(_containerHeight: number) {
     this.reset();
-    this.containerHeight = Math.max(containerHeight, 1);
   }
 
   // --- Event handlers (call from React) ---
@@ -138,43 +133,50 @@ export class TelemetryEngine {
 
   getSnapshot(): TelemetrySnapshot {
     const now = performance.now();
-    const elapsed = Math.max((now - this.startTime) / 1000, 0.1);
     const windowStart = now - WINDOW_SEC * 1000;
 
-    // 1. Click frequency (clicks/sec in window, normalised: 1.2 cps = 1.0)
+    // 1. Click frequency (clicks/sec in window, normalised: 1.0 cps = 1.0)
+    // Moving from 1.2 to 1.0 so that 0.8 clicks/s during game accurately hits 0.8 Focus mean
     const recentClicks = this.clickTimes.filter((t) => t >= windowStart).length;
-    const clickFreq = Math.min(recentClicks / WINDOW_SEC / 1.2, 1);
+    const clickFreq = Math.min(recentClicks / WINDOW_SEC / 1.0, 1);
 
-    // 2. Hesitation time (avg reaction time, normalised: 3s → 1.0)
+    // 2. Hesitation time (avg reaction time)
+    // Real "focused" human reaction to visual search is ~600ms.
+    // The dataset focuses around 0.1 for focused. 600ms / 6000ms = 0.1
     const avgReaction =
       this.hitTimes.length > 0
         ? this.hitTimes.reduce((a, b) => a + b, 0) / this.hitTimes.length
         : 1500;
-    const hesitation = Math.min(avgReaction / 3000, 1);
+    const hesitation = Math.min(avgReaction / 6000, 1);
 
     // 3. Misclick rate
     const misclickRate =
-      this.totalClicks > 0 ? this.missClicks / this.totalClicks : 0.5;
+      this.totalClicks > 0 ? this.missClicks / this.totalClicks : 0.0;
 
-    // 4. Scroll depth (total scroll / 5× container height)
-    const scrollDepth = Math.min(
-      this.scrollAccum / (this.containerHeight * 5),
-      1,
-    );
+    // 4. Scroll depth
+    // The assessment has no vertical scroll! So we proxy "scroll depth" as 
+    // "progress through the assessment" (valid hits / ~15 expected targets).
+    // Hitting ~11-12 targets in a perfect game will score ~0.8.
+    const validHits = Math.max(0, this.totalClicks - this.missClicks);
+    const scrollDepth = Math.min(validHits / 15, 1);
 
     // 5. Movement smoothness (inverse of avg angular deviation)
     const smoothness = this.computeSmoothness();
 
-    // 6. Dwell time (avg hover duration normalised: 3s → 1.0)
+    // 6. Dwell time (avg hover duration normalised: 2s → 1.0)
+    // Moving to click a target deliberately takes around ~600ms of hover/travel time
+    // inside the target boundary. Mapped to 0.3 for Focused.
     const avgDwell =
       this.hoverDurations.length > 0
         ? this.hoverDurations.reduce((a, b) => a + b, 0) /
           this.hoverDurations.length
-        : 500;
-    const dwellTime = Math.min(avgDwell / 3000, 1);
+        : 300;
+    const dwellTime = Math.min(avgDwell / 2000, 1);
 
-    // 7. Navigation speed (px/sec normalised: 1000px/s → 1.0)
+    // 7. Navigation speed (px/sec normalised: 500px/s → 1.0)
+    // Precise aim means lower pixels per second vs erratic tracking
     const navSpeed = this.computeNavSpeed(windowStart, now);
+    const finalNavSpeed = Math.min(navSpeed * (800 / 500), 1);
 
     // 8. Direction changes per second (normalised: 5/sec → 1.0)
     const recentDirChanges = this.dirChanges.filter(
@@ -189,7 +191,7 @@ export class TelemetryEngine {
       scroll_depth: clamp(scrollDepth),
       movement_smoothness: clamp(smoothness),
       dwell_time: clamp(dwellTime),
-      navigation_speed: clamp(navSpeed),
+      navigation_speed: clamp(finalNavSpeed),
       direction_changes: clamp(dirChangeRate),
     };
   }
