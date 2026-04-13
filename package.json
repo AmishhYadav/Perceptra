@@ -1,0 +1,11 @@
+{
+  "name": "perceptra-root",
+  "private": true,
+  "version": "1.0.0",
+  "scripts": {
+    "dev": "npm --prefix frontend run dev",
+    "dev:api": "npm --prefix frontend run dev:api",
+    "dev:all": "npm --prefix frontend run dev:all",
+    "install:all": "npm install && npm --prefix frontend install && pip install -r requirements.txt"
+  }
+}
