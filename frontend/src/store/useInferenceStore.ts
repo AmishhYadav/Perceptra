@@ -75,6 +75,7 @@ interface InferenceState {
   sendTelemetry: (payload: TelemetryInput) => void;
   /** Switch which model is highlighted in the detail panel */
   setActiveModel: (model: ModelName) => void;
+  clearPredictions: () => void;
 }
 
 export const useInferenceStore = create<InferenceState>((set, get) => ({
@@ -154,6 +155,10 @@ export const useInferenceStore = create<InferenceState>((set, get) => ({
     });
   },
 
+  clearPredictions: () => {
+    set({ allPredictions: null, currentPrediction: null });
+  },
+
   sendTelemetry: (payload: TelemetryInput) => {
     const { ws } = get();
     // Use readyState directly — more reliable than our connectionStatus flag
@@ -170,3 +175,4 @@ export const useInferenceStore = create<InferenceState>((set, get) => ({
     });
   },
 }));
+

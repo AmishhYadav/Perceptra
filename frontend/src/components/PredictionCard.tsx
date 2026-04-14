@@ -53,7 +53,10 @@ function ModelMiniCard({
   onSelect: () => void;
 }) {
   const config = STATE_CONFIG[prediction.predicted_class];
-  const confidencePercent = (prediction.confidence * 100).toFixed(1);
+  let confidencePercent = (prediction.confidence * 100).toFixed(1);
+  if (confidencePercent === "100.0") {
+    confidencePercent = ">99.9";
+  }
 
   return (
     <button

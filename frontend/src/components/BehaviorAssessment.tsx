@@ -158,9 +158,12 @@ export function BehaviorAssessment() {
     recordedSnapshotsRef.current = [];
 
     // Clear stale predictions and ensure fresh WebSocket connection
-    const { disconnect, connectAll } = useInferenceStore.getState();
-    disconnect(); // tear down old socket
-    connectAll(); // create fresh one
+    const { clearPredictions, connectionStatus, connectAll } = useInferenceStore.getState();
+    clearPredictions(); 
+    // Only attempt to connect if the socket actually died
+    if (connectionStatus === "disconnected" || connectionStatus === "error") {
+      connectAll(); 
+    }
 
     setPhase("playing");
     setTimeLeft(GAME_DURATION_SEC);
