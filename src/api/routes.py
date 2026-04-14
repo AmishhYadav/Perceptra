@@ -48,12 +48,18 @@ async def inference_all_ws(websocket: WebSocket):
                 results = _manager.get_all_predictions(telemetry)
                 await websocket.send_json(results)
             except json.JSONDecodeError:
-                await websocket.send_json({"error": "Invalid JSON"})
+                try:
+                    await websocket.send_json({"error": "Invalid JSON"})
+                except Exception:
+                    break
             except KeyError as e:
-                await websocket.send_json({"error": f"Missing feature: {e}"})
-            except Exception as e:
-                await websocket.send_json({"error": str(e)})
-    except WebSocketDisconnect:
+                try:
+                    await websocket.send_json({"error": f"Missing feature: {e}"})
+                except Exception:
+                    break
+            except Exception:
+                break  # connection likely dead, exit cleanly
+    except (WebSocketDisconnect, Exception):
         pass
 
 

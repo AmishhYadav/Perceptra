@@ -44,7 +44,7 @@ export function VisualControls() {
   ];
 
   return (
-    <>
+    <div className="space-y-6">
       {/* Model Comparison Toggle */}
       <div>
         <label className="text-[10px] uppercase tracking-[0.05em] font-medium text-on-surface-variant mb-3 block">Model Architecture</label>
@@ -150,7 +150,7 @@ export function VisualControls() {
            </div>
          </div>
       )}
-    </>
+    </div>
   );
 }
 

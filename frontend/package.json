@@ -5,8 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "dev:api": "cd .. && source .venv/bin/activate && uvicorn src.api.main:app --reload --port 8000",
-    "dev:all": "concurrently -n API,UI -c green,cyan \"npm run dev:api\" \"npm run dev\"",
+    "dev:api": "cd .. && .venv/bin/uvicorn src.api.main:app --reload --port 8000",
+    "dev:all": "concurrently --kill-others -n API,UI -c green,cyan \"npm run dev:api\" \"npm run dev\"",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview"

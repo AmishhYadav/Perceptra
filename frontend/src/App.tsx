@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import { useInferenceStore } from "./store/useInferenceStore";
-import { ControlPanel } from "./components/ControlPanel";
 import { PredictionCard } from "./components/PredictionCard";
 import { Explanations } from "./components/Explanations";
 import { VisualPlayground } from "./components/VisualPlayground";
@@ -153,7 +152,7 @@ function App() {
           className="px-12 pb-20"
           style={{ display: activeTab === "telemetry" ? "block" : "none" }}
         >
-          <div className="flex gap-12">
+        <div className="flex gap-12">
             {/* Central Intelligence Grid */}
             <div className="flex-1 space-y-12">
               {/* Focus Assessment Game */}
@@ -166,19 +165,11 @@ function App() {
                 <PredictionCard />
               </section>
 
-              {/* Feature Importance / Diagnostics */}
+              {/* AMNP Explainability Dashboard */}
               <section>
                 <Explanations />
               </section>
             </div>
-
-            {/* Right Sidebar: Model Selector & Telemetry Logs */}
-            <aside className="w-96 flex flex-col gap-8">
-              <div className="bg-white rounded-lg p-8 shadow-sm border border-outline-variant/10">
-                <h3 className="font-headline text-2xl mb-6">Model Detail</h3>
-                <ControlPanel />
-              </div>
-            </aside>
           </div>
         </div>
 

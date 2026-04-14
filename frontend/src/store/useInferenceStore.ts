@@ -29,6 +29,9 @@ export interface PredictionOutput {
   extras?: {
     component_weights?: { nonlinear_weight: number; linear_weight: number };
     mean_margin?: number;
+    margin_satisfaction?: number;
+    nonlinear_importance?: Record<string, number>;
+    linear_importance?: Record<string, number>;
   };
 }
 
@@ -82,22 +85,32 @@ export const useInferenceStore = create<InferenceState>((set, get) => ({
   ws: null,
 
   connectAll: () => {
-    // Tear down existing connection
-    const { ws } = get();
-    if (ws) {
-      ws.close();
+    // Prevent duplicate connections (React StrictMode double-mount, etc.)
+    const { ws: existingWs } = get();
+    if (existingWs && (existingWs.readyState === WebSocket.OPEN || existingWs.readyState === WebSocket.CONNECTING)) {
+      return; // already connected or connecting
+    }
+
+    // Tear down existing dead connection cleanly
+    if (existingWs) {
+      existingWs.onclose = null;
+      existingWs.onerror = null;
+      existingWs.onmessage = null;
+      existingWs.close();
     }
 
     set({
       connectionStatus: "connecting",
       allPredictions: null,
       currentPrediction: null,
+      ws: null,
     });
 
     const socket = new WebSocket(`${WS_BASE}/all`);
 
     socket.onopen = () => {
       set({ connectionStatus: "connected", ws: socket });
+      console.log("[Perceptra] WebSocket connected");
     };
 
     socket.onmessage = (event) => {
@@ -123,15 +136,16 @@ export const useInferenceStore = create<InferenceState>((set, get) => ({
 
     socket.onclose = () => {
       set({ connectionStatus: "disconnected", ws: null });
+      console.log("[Perceptra] WebSocket disconnected");
     };
-
-    // Store early so sendTelemetry can use it while connecting
-    set({ ws: socket });
   },
 
   disconnect: () => {
     const { ws } = get();
-    if (ws) ws.close();
+    if (ws) {
+      ws.onclose = null; // prevent any stale handlers
+      ws.close();
+    }
     set({
       ws: null,
       connectionStatus: "disconnected",
@@ -141,8 +155,9 @@ export const useInferenceStore = create<InferenceState>((set, get) => ({
   },
 
   sendTelemetry: (payload: TelemetryInput) => {
-    const { ws, connectionStatus } = get();
-    if (ws && connectionStatus === "connected") {
+    const { ws } = get();
+    // Use readyState directly — more reliable than our connectionStatus flag
+    if (ws && ws.readyState === WebSocket.OPEN) {
       ws.send(JSON.stringify(payload));
     }
   },

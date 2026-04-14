@@ -182,35 +182,35 @@ export function LandingPage({ onLaunch }: { onLaunch: () => void }) {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-20 max-w-7xl mx-auto text-primary">
             <div className="text-center group">
               <span className="font-label text-xs uppercase tracking-[0.4em] mb-6 block text-primary/60">
-                Scale
+                Features
               </span>
               <div className="font-headline text-8xl lg:text-[10rem] tracking-tighter transition-transform group-hover:scale-110 duration-700">
-                1.2B
+                8
               </div>
               <p className="font-label text-sm mt-4 italic text-primary/60">
-                Events daily
+                Behavioral dimensions
               </p>
             </div>
             <div className="text-center group">
               <span className="font-label text-xs uppercase tracking-[0.4em] mb-6 block text-primary/60">
-                Speed
+                Frequency
               </span>
               <div className="font-headline text-8xl lg:text-[10rem] tracking-tighter transition-transform group-hover:scale-110 duration-700">
-                4<span className="text-3xl italic">ms</span>
+                10<span className="text-3xl italic ml-4 tracking-normal">Hz</span>
               </div>
               <p className="font-label text-sm mt-4 italic text-primary/60">
-                End-to-end latency
+                Telemetry polling rate
               </p>
             </div>
             <div className="text-center group">
               <span className="font-label text-xs uppercase tracking-[0.4em] mb-6 block text-primary/60">
-                Precision
+                Models
               </span>
               <div className="font-headline text-8xl lg:text-[10rem] tracking-tighter transition-transform group-hover:scale-110 duration-700">
-                99<span className="text-3xl italic">%</span>
+                4
               </div>
               <p className="font-label text-sm mt-4 italic text-primary/60">
-                Confidence level
+                Active architectures
               </p>
             </div>
           </div>

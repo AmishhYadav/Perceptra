@@ -58,6 +58,11 @@ interface VisualizationState {
   accuracyHistory: number[];
   lossHistory: number[];
 
+  // Classification summary (computed on each epoch)
+  classAccuracies: number[]; // per-class accuracy [focused, distracted, confused]
+  classDistribution: number[]; // how many samples per class
+  confusionCounts: number[][]; // 3×3: confusionCounts[true][pred]
+
   // Playback
   playbackState: PlaybackState;
   speed: number; // ms between epochs
@@ -85,6 +90,28 @@ interface VisualizationState {
   setShowBoundary: (v: boolean) => void;
 }
 
+/* Helper: compute per-class metrics from points + predictions */
+function computeClassMetrics(points: DataPoint[], predictions: number[]) {
+  const nClasses = 3;
+  const classCounts = new Array(nClasses).fill(0);
+  const classCorrect = new Array(nClasses).fill(0);
+  const confusion = Array.from({ length: nClasses }, () => new Array(nClasses).fill(0));
+
+  for (let i = 0; i < points.length && i < predictions.length; i++) {
+    const trueLabel = points[i].trueLabel;
+    const predLabel = predictions[i];
+    classCounts[trueLabel]++;
+    confusion[trueLabel][predLabel]++;
+    if (trueLabel === predLabel) classCorrect[trueLabel]++;
+  }
+
+  const classAccuracies = classCounts.map((count, i) =>
+    count > 0 ? classCorrect[i] / count : 0,
+  );
+
+  return { classAccuracies, classDistribution: classCounts, confusionCounts: confusion };
+}
+
 export const useVisualizationStore = create<VisualizationState>((set, get) => ({
   points: [],
   classes: [],
@@ -103,6 +130,9 @@ export const useVisualizationStore = create<VisualizationState>((set, get) => ({
   loss: 0,
   accuracyHistory: [],
   lossHistory: [],
+  classAccuracies: [0, 0, 0],
+  classDistribution: [0, 0, 0],
+  confusionCounts: [[0,0,0],[0,0,0],[0,0,0]],
 
   playbackState: "idle",
   speed: 80,
@@ -134,6 +164,9 @@ export const useVisualizationStore = create<VisualizationState>((set, get) => ({
       loss: 0,
       accuracyHistory: [],
       lossHistory: [],
+      classAccuracies: [0, 0, 0],
+      classDistribution: [0, 0, 0],
+      confusionCounts: [[0,0,0],[0,0,0],[0,0,0]],
       xAxisLabel: "Click Frequency",
       yAxisLabel: "Hesitation Time",
       ws: null,
@@ -168,6 +201,7 @@ export const useVisualizationStore = create<VisualizationState>((set, get) => ({
 
           if (data.type === "epoch") {
             const state = get();
+            const metrics = computeClassMetrics(state.points, data.predictions);
             set({
               epoch: data.epoch,
               totalEpochs: data.total_epochs,
@@ -177,6 +211,9 @@ export const useVisualizationStore = create<VisualizationState>((set, get) => ({
               boundary: data.boundary || state.boundary,
               accuracyHistory: [...state.accuracyHistory, data.accuracy],
               lossHistory: [...state.lossHistory, data.loss],
+              classAccuracies: metrics.classAccuracies,
+              classDistribution: metrics.classDistribution,
+              confusionCounts: metrics.confusionCounts,
             });
           }
 
@@ -231,6 +268,9 @@ export const useVisualizationStore = create<VisualizationState>((set, get) => ({
       loss: 0,
       accuracyHistory: [],
       lossHistory: [],
+      classAccuracies: [0, 0, 0],
+      classDistribution: [0, 0, 0],
+      confusionCounts: [[0,0,0],[0,0,0],[0,0,0]],
     });
     ws.send(JSON.stringify({ action: "speed", value: speed }));
     ws.send(JSON.stringify({ action: "start" }));

@@ -1,6 +1,6 @@
 # Perceptra — Model Benchmark Report
 
-> Generated on April 13, 2026 at 01:15 | Test samples: **3000**
+> Generated on April 15, 2026 at 01:45 | Test samples: **3000**
 
 ## Classification Performance
 
@@ -8,8 +8,8 @@
 |-------|----------|-----------|--------|----------|
 | Perceptron | 0.9863 | 0.9804 | 0.9823 | 0.9813 |
 | SVM | 0.9913 | 0.9878 | 0.9885 | 0.9882 |
-| NeuralNetwork | 0.9887 | 0.9840 | 0.9848 | 0.9844 |
-| AMNP | 0.9867 | 0.9803 | 0.9831 | 0.9816 |
+| NeuralNetwork | 0.9910 | 0.9869 | 0.9886 | 0.9877 |
+| AMNP | 0.9870 | 0.9816 | 0.9825 | 0.9820 |
 
 ## Per-Class Breakdown
 
@@ -34,25 +34,25 @@
 | Class | Precision | Recall | F1 |
 |-------|-----------|--------|----|
 | focused | 0.9987 | 0.9993 | 0.9990 |
-| distracted | 0.9840 | 0.9773 | 0.9806 |
-| confused | 0.9693 | 0.9777 | 0.9735 |
+| distracted | 0.9908 | 0.9784 | 0.9846 |
+| confused | 0.9713 | 0.9880 | 0.9796 |
 
 ### AMNP
 
 | Class | Precision | Recall | F1 |
 |-------|-----------|--------|----|
 | focused | 0.9993 | 0.9987 | 0.9990 |
-| distracted | 0.9850 | 0.9694 | 0.9771 |
-| confused | 0.9564 | 0.9811 | 0.9686 |
+| distracted | 0.9795 | 0.9762 | 0.9778 |
+| confused | 0.9659 | 0.9725 | 0.9692 |
 
 ## Inference Latency (10,000 runs, batch=10)
 
 | Model | Mean (ms) | P50 (ms) | P95 (ms) | P99 (ms) |
 |-------|-----------|----------|----------|----------|
-| Perceptron | 0.523 | 0.523 | 0.539 | 0.550 |
-| SVM | 0.204 | 0.203 | 0.213 | 0.220 |
-| NeuralNetwork | 0.085 | 0.085 | 0.092 | 0.098 |
-| AMNP | 0.093 | 0.089 | 0.109 | 0.111 |
+| Perceptron | 0.514 | 0.513 | 0.535 | 0.553 |
+| SVM | 0.202 | 0.201 | 0.216 | 0.224 |
+| NeuralNetwork | 0.087 | 0.088 | 0.093 | 0.098 |
+| AMNP | 0.106 | 0.102 | 0.124 | 0.128 |
 
 ## Visualizations
 

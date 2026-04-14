@@ -96,4 +96,11 @@
     background: rgba(251, 249, 244, 0.7);
     backdrop-filter: blur(20px);
   }
+
+  @keyframes targetFade {
+    0% { opacity: 0; }
+    10% { opacity: 1; }
+    85% { opacity: 1; }
+    100% { opacity: 0; }
+  }
 }

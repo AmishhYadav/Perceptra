@@ -93,11 +93,24 @@ class ModelManager:
             },
         }
 
-        # AMNP-specific extras
+        # AMNP-specific extras (v3: margin confidence + path-decomposed importance)
         if model_name == "AMNP":
             result["extras"] = {
                 "component_weights": explanation.get("component_weights", {}),
                 "mean_margin": explanation.get("mean_margin", 0.0),
+                "margin_satisfaction": explanation.get("margin_satisfaction", 0.0),
+                "nonlinear_importance": {
+                    FEATURE_NAMES[i]: float(
+                        explanation.get("nonlinear_importance", np.zeros(N_FEATURES))[i]
+                    )
+                    for i in range(N_FEATURES)
+                },
+                "linear_importance": {
+                    FEATURE_NAMES[i]: float(
+                        explanation.get("linear_importance", np.zeros(N_FEATURES))[i]
+                    )
+                    for i in range(N_FEATURES)
+                },
             }
 
         return result
@@ -147,11 +160,24 @@ class ModelManager:
                 },
             }
 
-            # AMNP-specific extras
+            # AMNP-specific extras (v3: margin confidence + path-decomposed importance)
             if model_name == "AMNP":
                 result["extras"] = {
                     "component_weights": explanation.get("component_weights", {}),
                     "mean_margin": explanation.get("mean_margin", 0.0),
+                    "margin_satisfaction": explanation.get("margin_satisfaction", 0.0),
+                    "nonlinear_importance": {
+                        FEATURE_NAMES[i]: float(
+                            explanation.get("nonlinear_importance", np.zeros(N_FEATURES))[i]
+                        )
+                        for i in range(N_FEATURES)
+                    },
+                    "linear_importance": {
+                        FEATURE_NAMES[i]: float(
+                            explanation.get("linear_importance", np.zeros(N_FEATURES))[i]
+                        )
+                        for i in range(N_FEATURES)
+                    },
                 }
 
             results[model_name] = result

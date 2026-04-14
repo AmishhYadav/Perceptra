@@ -8,3 +8,4 @@ from .schemas import (
 from .preprocessing import FeaturePreprocessor
 from .generator import BehavioralDataGenerator
 from .dataset import DatasetManager
+from .recorded import RecordedDataManager
