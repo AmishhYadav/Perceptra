@@ -70,7 +70,21 @@ export function BehaviorAssessment() {
 
   const [phase, setPhase] = useState<GamePhase>("idle");
   const [timeLeft, setTimeLeft] = useState(GAME_DURATION_SEC);
-  const [targets, setTargets] = useState<GameTarget[]>([]);
+  const [targetsState, _setTargets] = useState<GameTarget[]>([]);
+  const targetsRef = useRef<GameTarget[]>([]);
+
+  const setTargets = useCallback((newTargets: GameTarget[] | ((prev: GameTarget[]) => GameTarget[])) => {
+    if (typeof newTargets === "function") {
+      const next = newTargets(targetsRef.current);
+      targetsRef.current = next;
+      _setTargets(next);
+    } else {
+      targetsRef.current = newTargets;
+      _setTargets(newTargets);
+    }
+  }, []);
+  const targets = targetsState;
+  
   const [score, setScore] = useState(0);
   const [hits, setHits] = useState(0);
   const [_misses, setMisses] = useState(0);
@@ -163,21 +177,24 @@ export function BehaviorAssessment() {
 
     // Spawn timer — also count total spawned
     spawnTimerRef.current = setInterval(() => {
-      setTargets((prev) => {
-        if (prev.length >= MAX_TARGETS) return prev;
-        const rect = containerRef.current?.getBoundingClientRect();
-        if (!rect) return prev;
-        const pad = TARGET_RADIUS + 20;
-        const x = pad + Math.random() * (rect.width - 2 * pad);
-        const y = pad + Math.random() * (rect.height - 2 * pad);
-        const isDecoy = Math.random() < DECOY_CHANCE;
-        setTotalSpawned((p) => p + 1);
-        if (!isDecoy) setGreenSpawned((p) => p + 1);
-        return [
-          ...prev,
-          { id: nextIdRef.current++, x, y, spawnTime: performance.now(), isDecoy, opacity: 1 },
-        ];
-      });
+      const prev = targetsRef.current;
+      if (prev.length >= MAX_TARGETS) return;
+      
+      const rect = containerRef.current?.getBoundingClientRect();
+      if (!rect) return;
+      
+      const pad = TARGET_RADIUS + 20;
+      const x = pad + Math.random() * (rect.width - 2 * pad);
+      const y = pad + Math.random() * (rect.height - 2 * pad);
+      const isDecoy = Math.random() < DECOY_CHANCE;
+      
+      setTotalSpawned((p) => p + 1);
+      if (!isDecoy) setGreenSpawned((p) => p + 1);
+      
+      setTargets([
+        ...prev,
+        { id: nextIdRef.current++, x, y, spawnTime: performance.now(), isDecoy, opacity: 1 },
+      ]);
     }, SPAWN_INTERVAL_MS);
 
     // Countdown timer — uses ref to avoid stale endGame closure
@@ -218,26 +235,29 @@ export function BehaviorAssessment() {
     // Logic loop to cull expired targets every 200ms
     animFrameRef.current = setInterval(() => {
       const now = performance.now();
-      setTargets((prev) => {
-          let hasChanges = false;
-          const surviving: typeof prev = [];
-          for (const t of prev) {
-            const age = now - t.spawnTime;
-            if (age >= TARGET_LIFETIME_MS) {
-              hasChanges = true;
-              if (!t.isDecoy) {
-                engine.recordTargetExpired(TARGET_LIFETIME_MS);
-                setGreenExpired((p) => p + 1);
-              }
-            } else {
-              surviving.push(t);
-            }
+      const prev = targetsRef.current;
+      let hasChanges = false;
+      const surviving: GameTarget[] = [];
+      let newExpired = 0;
+
+      for (const t of prev) {
+        const age = now - t.spawnTime;
+        if (age >= TARGET_LIFETIME_MS) {
+          hasChanges = true;
+          if (!t.isDecoy) {
+            engine.recordTargetExpired(TARGET_LIFETIME_MS);
+            newExpired++;
           }
-          return hasChanges ? surviving : prev;
+        } else {
+          surviving.push(t);
         }
-      );
+      }
+
+      if (newExpired > 0) setGreenExpired((p) => p + newExpired);
+      if (hasChanges) setTargets(surviving);
+
     }, 200) as unknown as number;
-  }, [sendTelemetry]);
+  }, [sendTelemetry, setTargets]);
 
   /* ── End game ── */
   const endGame = useCallback(() => {
@@ -248,19 +268,18 @@ export function BehaviorAssessment() {
     clearInterval(animFrameRef.current);
 
     // 2. Count any remaining alive targets as missed/expired
-    setTargets((prev) => {
-      let remainingGreen = 0;
-      for (const t of prev) {
-        if (!t.isDecoy) {
-          remainingGreen++;
-          engineRef.current.recordTargetExpired(TARGET_LIFETIME_MS);
-        }
+    const prev = targetsRef.current;
+    let remainingGreen = 0;
+    for (const t of prev) {
+      if (!t.isDecoy) {
+        remainingGreen++;
+        engineRef.current.recordTargetExpired(TARGET_LIFETIME_MS);
       }
-      if (remainingGreen > 0) {
-        setGreenExpired((p) => p + remainingGreen);
-      }
-      return []; // clear all targets
-    });
+    }
+    if (remainingGreen > 0) {
+      setGreenExpired((p) => p + remainingGreen);
+    }
+    setTargets([]);
     
     // 3. Capture and send the FINAL high-fidelity snapshot
     const finalSnap = engineRef.current.getSnapshot();

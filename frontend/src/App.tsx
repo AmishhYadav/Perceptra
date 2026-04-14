@@ -22,7 +22,10 @@ function App() {
   }, [connectAll]);
 
   if (activeTab === "landing") {
-    return <LandingPage onLaunch={() => setActiveTab("telemetry")} />;
+    return <LandingPage onLaunch={() => {
+      window.scrollTo(0, 0);
+      setActiveTab("telemetry");
+    }} />;
   }
 
   return (
