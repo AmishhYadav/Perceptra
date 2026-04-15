@@ -53,6 +53,10 @@ export class TelemetryEngine {
   private hoverDurations: number[] = [];
   private isOverTarget = false;
 
+  // --- Game performance tracking ---
+  private greenHits = 0;       // successful target clicks
+  private greenTotal = 0;      // total green targets seen (hit + expired)
+
 
   reset() {
     this.clickTimes = [];
@@ -66,6 +70,8 @@ export class TelemetryEngine {
     this.hoverStartTime = 0;
     this.hoverDurations = [];
     this.isOverTarget = false;
+    this.greenHits = 0;
+    this.greenTotal = 0;
   }
 
   start(_containerHeight: number) {
@@ -83,6 +89,8 @@ export class TelemetryEngine {
     }
     if (hitTarget && reactionTimeMs !== undefined) {
       this.hitTimes.push(reactionTimeMs);
+      this.greenHits++;
+      this.greenTotal++;
     }
   }
 
@@ -138,6 +146,7 @@ export class TelemetryEngine {
    */
   recordTargetExpired(targetLifetimeMs: number) {
     this.expiredTargets++;
+    this.greenTotal++;
     // Treat an expired target as a "click" that took the full lifetime
     // This drags the average hesitation toward confused/distracted territory
     this.hitTimes.push(targetLifetimeMs);
@@ -149,41 +158,43 @@ export class TelemetryEngine {
     const now = performance.now();
     const windowStart = now - WINDOW_SEC * 1000;
 
-    // ── Task engagement ratio ──
-    // Cursor quality (smoothness, nav_speed) only means "focused" if the user
-    // is actually engaging with the task.
-    const validHits = Math.max(0, this.totalClicks - this.missClicks);
-    const totalTargetOpportunities = validHits + this.expiredTargets;
-    const taskEngagement = totalTargetOpportunities > 2
-      ? validHits / totalTargetOpportunities
-      : 1; // not enough data yet, don't penalize
-    // Scale cursor-quality features: disengaged → low values
-    const engagementScale = 0.15 + 0.85 * taskEngagement;
+    // ── Game performance (hit rate) ──
+    // This is the ground truth: if you're hitting everything, you ARE focused.
+    // hitRate ranges from 0.0 (missed everything) to 1.0 (hit everything)
+    const hitRate = this.greenTotal > 2
+      ? this.greenHits / this.greenTotal
+      : 0.5; // not enough data yet → neutral
+
+    // Performance-based engagement scale:
+    //   hitRate=1.0 → scale=1.0 (fully focused signals)
+    //   hitRate=0.5 → scale=0.6 (neutral)
+    //   hitRate=0.0 → scale=0.2 (distracted signals)
+    const perfScale = 0.2 + 0.8 * hitRate;
 
     // ── 1. Click frequency ──
-    // Training centroid: focused≈0.80, distracted≈0.50
-    // In a 3s window, ~2 target clicks = 0.67 cps → should map to ~0.80
+    // Focused ≈ 0.7-0.9, Distracted ≈ 0.2-0.5
     const recentClicks = this.clickTimes.filter((t) => t >= windowStart).length;
     const clicksPerSec = recentClicks / WINDOW_SEC;
-    const clickFreq = Math.min(clicksPerSec / 0.85, 1);
+    // ~2 clicks in 3s window = 0.67 cps → 0.67/1.0 = 0.67; scale up for focused
+    const clickFreq = Math.min(clicksPerSec / 1.0, 1);
 
     // ── 2. Hesitation time ──
-    // Training centroid: focused≈0.10, distracted≈0.51
-    // Focused reaction ≈600ms → 600/6000=0.10 ✓
-    // Expired targets inject full lifetime ~2800ms → 2800/6000=0.47
+    // Focused ≈ 0.05-0.15, Distracted ≈ 0.3-0.6
+    // Focused reaction ≈ 500-800ms → 600/5000 = 0.12
+    // Expired targets inject ~2800ms → 2800/5000 = 0.56
     const avgReaction =
       this.hitTimes.length > 0
         ? this.hitTimes.reduce((a, b) => a + b, 0) / this.hitTimes.length
         : 1500;
-    const hesitation = Math.min(avgReaction / 6000, 1);
+    const hesitation = Math.min(avgReaction / 5000, 1);
 
     // ── 3. Misclick rate ──
-    // Training centroid: focused≈0.07, distracted≈0.30
+    // Focused ≈ 0.02-0.10, Distracted ≈ 0.2-0.5
     let misclickRate: number;
     if (this.totalClicks === 0 && this.expiredTargets > 0) {
-      misclickRate = 0.8; // complete inattention
+      misclickRate = 0.7; // complete inattention
     } else if (this.totalClicks === 0 && this.expiredTargets === 0) {
-      misclickRate = 0.3; // game just started, neutral
+      misclickRate = 0.15; // game just started, slightly neutral
     } else {
       const totalOpportunities = this.totalClicks + this.expiredTargets;
       misclickRate = totalOpportunities > 0
@@ -191,22 +202,24 @@ export class TelemetryEngine {
         : 0.0;
     }
 
-    // ── 4. Scroll depth (proxied as hit progress) ──
-    // Training centroid: focused≈0.70, distracted≈0.40
-    // ~10 valid green hits in 15s game → 0.71
-    const scrollDepth = Math.min(validHits / 14, 1);
+    // ── 4. Scroll depth (proxied as task progress / hit progress) ──
+    // Focused ≈ 0.6-0.8, Distracted ≈ 0.1-0.4
+    // A focused player hits ~10-13 targets in 20s → 12/18 = 0.67
+    // A distracted player hits ~2-5 → 3/18 = 0.17
+    const scrollDepth = Math.min(this.greenHits / 18, 1);
 
     // ── 5. Movement smoothness ──
-    // Training centroid: focused≈0.89, distracted≈0.51
-    // computeSmoothness returns 0..1; raw focused gameplay ≈0.6-0.8
-    // Scale: 0.75 raw → 0.90 output
+    // Focused ≈ 0.7-0.9, Distracted ≈ 0.3-0.6
+    // computeSmoothness() returns 0..1 based on angular variance
+    // Focused gameplay naturally produces 0.6-0.85 — use as-is, no boost
     const rawSmoothness = this.computeSmoothness();
-    const boostedSmoothness = Math.min(rawSmoothness * 1.2, 1);
-    const smoothness = boostedSmoothness * engagementScale;
+    // Modulate by performance: smooth mouse movement only means "focused"
+    // if the user is actually hitting targets
+    const smoothness = rawSmoothness * perfScale;
 
     // ── 6. Dwell time ──
-    // Training centroid: focused≈0.30, distracted≈0.60
-    // Quick target clicks ≈300-500ms hover → 400/1500=0.27
+    // Focused ≈ 0.15-0.35, Distracted ≈ 0.4-0.7
+    // Quick target clicks ≈ 200-500ms hover → 350/1500 = 0.23
     const avgDwell =
       this.hoverDurations.length > 0
         ? this.hoverDurations.reduce((a, b) => a + b, 0) /
@@ -215,18 +228,20 @@ export class TelemetryEngine {
     const dwellTime = Math.min(avgDwell / 1500, 1);
 
     // ── 7. Navigation speed ──
-    // Training centroid: focused≈0.70, distracted≈0.40
-    // In-game cursor ~200px/sec → 200/280=0.71 ✓
-    const rawNavSpeed = this.computeNavSpeed(windowStart, now);
-    const finalNavSpeed = Math.min(rawNavSpeed / 280, 1) * engagementScale;
+    // Focused ≈ 0.5-0.8, Distracted ≈ 0.1-0.4
+    // In-game cursor typically moves at ~100-250 px/s
+    // Normalize: 200 px/s → 200/300 = 0.67 (focused territory)
+    const pxPerSec = this.computeNavSpeedRaw(windowStart, now);
+    const navSpeed = Math.min(pxPerSec / 300, 1) * perfScale;
 
     // ── 8. Direction changes ──
-    // Training centroid: focused≈0.11, distracted≈0.40
-    // Focused: ~0.3 changes/sec → 0.3/3=0.10
+    // Focused ≈ 0.05-0.20, Distracted ≈ 0.3-0.6
+    // Focused: ~1-2 direction changes in 3s window → 1.5/3/2 = 0.25
+    // Confused: ~3-5 changes → 4/3/2 = 0.67
     const recentDirChanges = this.dirChanges.filter(
       (t) => t >= windowStart,
     ).length;
-    const dirChangeRate = Math.min(recentDirChanges / WINDOW_SEC / 3, 1);
+    const dirChangeRate = Math.min(recentDirChanges / WINDOW_SEC / 2, 1);
 
     return {
       click_frequency: clamp(clickFreq),
@@ -235,7 +250,7 @@ export class TelemetryEngine {
       scroll_depth: clamp(scrollDepth),
       movement_smoothness: clamp(smoothness),
       dwell_time: clamp(dwellTime),
-      navigation_speed: clamp(finalNavSpeed),
+      navigation_speed: clamp(navSpeed),
       direction_changes: clamp(dirChangeRate),
     };
   }
@@ -243,7 +258,7 @@ export class TelemetryEngine {
   private computeSmoothness(): number {
     // Use last N samples. Lower angular variance → higher smoothness.
     const recent = this.samples.slice(-60);
-    if (recent.length < 5) return 0.2; // insufficient data = not smooth
+    if (recent.length < 5) return 0.3; // insufficient data = not smooth
 
     let totalAngle = 0;
     let count = 0;
@@ -263,14 +278,19 @@ export class TelemetryEngine {
         count++;
       }
     }
-    if (count === 0) return 0.5;
+    if (count === 0) return 0.4;
     const avgAngle = totalAngle / count; // 0 = perfectly smooth, π = max chaos
-    return 1 - Math.min(avgAngle / Math.PI, 1); // invert: high = smooth
+    // Map: avgAngle ≈ 0.3 rad (smooth) → 0.85, avgAngle ≈ 1.5 rad (chaotic) → 0.20
+    // Using a slightly compressed range to avoid saturation at 1.0
+    return Math.max(0.1, 1 - avgAngle / (Math.PI * 0.8));
   }
 
-  private computeNavSpeed(windowStart: number, now: number): number {
+  /**
+   * Compute raw cursor speed in pixels per second within the time window.
+   */
+  private computeNavSpeedRaw(windowStart: number, now: number): number {
     const recent = this.samples.filter((s) => s.t >= windowStart);
-    if (recent.length < 2) return 0.3;
+    if (recent.length < 2) return 30; // minimal movement default
     let totalDist = 0;
     for (let i = 1; i < recent.length; i++) {
       const dx = recent[i].x - recent[i - 1].x;
@@ -278,8 +298,7 @@ export class TelemetryEngine {
       totalDist += Math.sqrt(dx * dx + dy * dy);
     }
     const duration = (now - windowStart) / 1000;
-    const pxPerSec = duration > 0 ? totalDist / duration : 0;
-    return Math.min(pxPerSec / 800, 1);
+    return duration > 0 ? totalDist / duration : 0;
   }
 }
 

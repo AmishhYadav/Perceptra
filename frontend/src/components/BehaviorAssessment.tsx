@@ -111,6 +111,7 @@ export function BehaviorAssessment() {
   const gameTimerRef = useRef<ReturnType<typeof setInterval> | undefined>(undefined);
   const telemetryTimerRef = useRef<ReturnType<typeof setInterval> | undefined>(undefined);
   const animFrameRef = useRef<number | undefined>(undefined);
+  const telemetryFrameCountRef = useRef(0);
 
   /* ── Fetch recording stats on mount ── */
   useEffect(() => {
@@ -211,10 +212,12 @@ export function BehaviorAssessment() {
       });
     }, 1000);
 
-    // Telemetry emission (10Hz)
+    // Telemetry emission — UI updates at 10Hz, model inference at 2Hz.
+    // This prevents confidence scores from flickering on every micro-change.
+    telemetryFrameCountRef.current = 0;
     telemetryTimerRef.current = setInterval(() => {
       const snap = engine.getSnapshot();
-      setLastSnapshot(snap);
+      setLastSnapshot(snap); // always update local UI (smooth telemetry bars)
 
       // Buffer snapshot for recording mode (read from ref, not closure)
       if (recordingModeRef.current && recordingLabelRef.current) {
@@ -231,8 +234,12 @@ export function BehaviorAssessment() {
         recordedSnapshotsRef.current.push(features);
       }
 
-      // Always send — sendTelemetry internally checks ws && connectionStatus
-      sendTelemetry(snap as TelemetryInput);
+      // Only send to WebSocket every 5th frame (2Hz) to reduce inference churn
+      telemetryFrameCountRef.current++;
+      if (telemetryFrameCountRef.current >= 5) {
+        telemetryFrameCountRef.current = 0;
+        sendTelemetry(snap as TelemetryInput);
+      }
     }, 100);
 
     // Logic loop to cull expired targets every 200ms

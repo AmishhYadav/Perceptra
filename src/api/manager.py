@@ -6,10 +6,17 @@ Serves as the single in-memory inference gateway for the Perceptra API.
 import numpy as np
 from pathlib import Path
 from typing import Dict
+from scipy.special import softmax as scipy_softmax
 
 from src.data.preprocessing import FeaturePreprocessor
 from src.data.schemas import FEATURE_NAMES, BEHAVIOR_CLASSES, N_FEATURES, N_CLASSES
 from src.models import PerceptronModel, SVMModel, NeuralNetModel, AMNPModel
+
+
+# Temperature scaling for confidence calibration.
+# Higher temperature → softer probabilities → more realistic confidence.
+# T=1.0 is standard softmax. T=3.0 gives ~80-90% for clear cases, ~55-70% for edge cases.
+CONFIDENCE_TEMPERATURE = 3.0
 
 
 WEIGHTS_DIR = Path("data/weights")
@@ -71,8 +78,10 @@ class ModelManager:
         )
         X = self.preprocessor.transform(raw)
 
-        # Predict
-        proba = model.predict_proba(X)[0]
+        # Predict with temperature-scaled confidence
+        raw_proba = model.predict_proba(X)[0]
+        # Apply temperature scaling: convert proba → log-odds → rescale → softmax
+        proba = _temperature_scale(raw_proba, CONFIDENCE_TEMPERATURE)
         pred_idx = int(np.argmax(proba))
         pred_class = BEHAVIOR_CLASSES[pred_idx]
         confidence = float(proba[pred_idx])
@@ -135,7 +144,9 @@ class ModelManager:
 
         results = {}
         for model_name, model in self.models.items():
-            proba = model.predict_proba(X)[0]
+            raw_proba = model.predict_proba(X)[0]
+            # Apply temperature scaling for realistic confidence values
+            proba = _temperature_scale(raw_proba, CONFIDENCE_TEMPERATURE)
             pred_idx = int(np.argmax(proba))
             pred_class = BEHAVIOR_CLASSES[pred_idx]
             confidence = float(proba[pred_idx])
@@ -187,3 +198,26 @@ class ModelManager:
     def list_models(self):
         """Return available model names."""
         return list(self.models.keys())
+
+
+def _temperature_scale(proba: np.ndarray, temperature: float) -> np.ndarray:
+    """Apply temperature scaling to probability distribution.
+
+    Converts probabilities to log-space, divides by temperature,
+    then re-normalizes via softmax. This softens overconfident
+    predictions without changing the argmax (predicted class).
+
+    Args:
+        proba: Probability vector (sums to 1).
+        temperature: Scaling factor. >1 softens, <1 sharpens.
+
+    Returns:
+        Temperature-scaled probability vector.
+    """
+    if temperature == 1.0:
+        return proba
+    # Avoid log(0) by clipping
+    log_proba = np.log(np.clip(proba, 1e-10, 1.0))
+    scaled = log_proba / temperature
+    # Stable softmax via scipy
+    return scipy_softmax(scaled)

@@ -142,8 +142,9 @@ class RecordedDataManager:
     ) -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
         """Load recorded data, preprocess, and split into train/test.
 
-        Applies FeaturePreprocessor (fit on train split) for consistency
-        with the synthetic data pipeline.
+        Applies FeaturePreprocessor (fit on train split) and saves it
+        to the standard path so the inference pipeline uses the same
+        normalization as training.
 
         Returns:
             Tuple of (X_train, X_test, y_train, y_test).
@@ -163,11 +164,18 @@ class RecordedDataManager:
         X_train, X_test = X[train_idx], X[test_idx]
         y_train, y_test = y[train_idx], y[test_idx]
 
-        # Fit preprocessor on training split (mostly a no-op since TelemetryEngine
-        # already normalizes to [0,1], but ensures the pipeline is consistent)
+        # Fit preprocessor on training split and SAVE it so the inference
+        # pipeline (ModelManager) uses the exact same normalization.
         preprocessor = FeaturePreprocessor()
         X_train = preprocessor.fit_transform(X_train)
         X_test = preprocessor.transform(X_test)
+
+        # Save to the standard path used by ModelManager at startup
+        from pathlib import Path
+        preprocessor_path = Path("data/synthetic/preprocessor.joblib")
+        preprocessor_path.parent.mkdir(parents=True, exist_ok=True)
+        preprocessor.save(str(preprocessor_path))
+        print(f"  ✓ Preprocessor saved to {preprocessor_path}")
 
         return X_train, X_test, y_train, y_test
 

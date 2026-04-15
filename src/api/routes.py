@@ -1,9 +1,12 @@
 """WebSocket routes for real-time behavioral inference."""
 
 import json
+import logging
+import traceback
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 
 router = APIRouter()
+logger = logging.getLogger("perceptra.ws")
 
 # ModelManager is injected by main.py via app.state
 _manager = None
@@ -57,10 +60,21 @@ async def inference_all_ws(websocket: WebSocket):
                     await websocket.send_json({"error": f"Missing feature: {e}"})
                 except Exception:
                     break
-            except Exception:
-                break  # connection likely dead, exit cleanly
-    except (WebSocketDisconnect, Exception):
-        pass
+            except Exception as e:
+                # Log the inference error but keep the connection alive.
+                # Previously this was `break` which killed the socket silently.
+                logger.error(
+                    "Inference error (connection kept alive): %s\n%s",
+                    e, traceback.format_exc(),
+                )
+                try:
+                    await websocket.send_json({"error": f"Inference error: {e}"})
+                except Exception:
+                    break  # send failed → connection truly dead
+    except WebSocketDisconnect:
+        logger.info("Client disconnected from /inference/all")
+    except Exception as e:
+        logger.error("Unexpected WS error: %s\n%s", e, traceback.format_exc())
 
 
 @router.websocket("/inference/{model_name}")
@@ -97,6 +111,13 @@ async def inference_ws(websocket: WebSocket, model_name: str):
             except KeyError as e:
                 await websocket.send_json({"error": f"Missing feature: {e}"})
             except Exception as e:
-                await websocket.send_json({"error": str(e)})
+                logger.error(
+                    "Inference error on %s: %s\n%s",
+                    model_name, e, traceback.format_exc(),
+                )
+                try:
+                    await websocket.send_json({"error": str(e)})
+                except Exception:
+                    break
     except WebSocketDisconnect:
-        pass
+        logger.info("Client disconnected from /inference/%s", model_name)

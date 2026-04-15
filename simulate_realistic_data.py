@@ -73,45 +73,50 @@ class BehaviorSimulator:
     def _sim_focused(self, n: int) -> List[List[float]]:
         """Focused: fast, accurate, smooth, consistent — but not perfect.
 
-        Realistic traits:
-          - Reaction times are log-normal (fast median, occasional slow)
-          - Smoothness is high but drifts slightly as fatigue sets in
-          - Very low misclicks but not zero
-          - Some sessions have "autopilot" stretches that look like mild distraction
+        Aligned with the TelemetryEngine output for a player hitting 80-95%
+        of targets. Key ranges:
+          click_frequency:     0.45-0.85 (active clicking)
+          hesitation_time:     0.05-0.20 (fast reactions ~500-1000ms / 5000)
+          misclick_rate:       0.02-0.12 (very few errors)
+          scroll_depth:        0.45-0.80 (hit proxy: 8-14 hits / 18)
+          movement_smoothness: 0.50-0.85 (smooth cursor * high perfScale)
+          dwell_time:          0.10-0.30 (quick hover-and-click)
+          navigation_speed:    0.35-0.70 (active cursor * high perfScale)
+          direction_changes:   0.05-0.20 (purposeful movement)
         """
         rng = self.rng
 
-        # Per-session personality (each focused user is slightly different)
-        skill_level = rng.beta(8, 2)  # 0.6-1.0 range, most users are good
-        fatigue_rate = rng.uniform(0.0005, 0.003)  # how fast they tire
-        has_autopilot = rng.random() < 0.25  # 25% chance of an autopilot stretch
+        # Per-session personality
+        skill_level = rng.beta(8, 2)  # 0.6-1.0
+        fatigue_rate = rng.uniform(0.0003, 0.002)
+        has_autopilot = rng.random() < 0.20
         autopilot_start = rng.randint(80, 150) if has_autopilot else n + 1
-        autopilot_duration = rng.randint(20, 50) if has_autopilot else 0
+        autopilot_duration = rng.randint(15, 40) if has_autopilot else 0
 
         samples = []
         for t in range(n):
-            fatigue = 1.0 - fatigue_rate * t  # slowly degrades
+            fatigue = 1.0 - fatigue_rate * t
             in_autopilot = autopilot_start <= t < autopilot_start + autopilot_duration
 
             if in_autopilot:
-                # Autopilot: still clicking but less engaged
-                click_freq = rng.beta(4, 3) * 0.7
-                hesitation = rng.beta(3, 4) * 0.4
-                misclick = rng.beta(2, 8) * 0.2
-                smoothness = rng.beta(5, 3) * 0.7
-                dwell = rng.beta(3, 5) * 0.4
-                nav_speed = rng.beta(4, 4) * 0.6
-                dir_changes = rng.beta(3, 6) * 0.35
+                # Autopilot: still clicking but slightly degraded
+                click_freq = rng.beta(5, 3) * 0.55 + 0.15
+                hesitation = rng.beta(3, 5) * 0.20 + 0.05
+                misclick = rng.beta(2, 8) * 0.15
+                scroll = rng.beta(5, 3) * 0.25 + 0.30    # fewer hits
+                smoothness = rng.beta(6, 3) * 0.35 + 0.30
+                dwell = rng.beta(3, 5) * 0.20 + 0.10
+                nav_speed = rng.beta(5, 4) * 0.30 + 0.20
+                dir_changes = rng.beta(3, 6) * 0.15 + 0.05
             else:
-                click_freq = rng.beta(8, 2) * skill_level * fatigue
-                hesitation = rng.exponential(0.08) * (2.0 - skill_level)
-                misclick = rng.beta(1, 15) * (1.1 - skill_level)
-                smoothness = rng.beta(10, 2) * skill_level * fatigue
-                dwell = rng.exponential(0.1) * (1.5 - skill_level)
-                nav_speed = rng.beta(8, 3) * skill_level * fatigue
-                dir_changes = rng.beta(2, 10) * (1.2 - skill_level)
-
-            scroll = rng.beta(1, 12)  # focused users barely scroll
+                click_freq = rng.beta(7, 3) * 0.40 * skill_level * fatigue + 0.35
+                hesitation = rng.exponential(0.06) * (2.0 - skill_level) + 0.03
+                misclick = rng.beta(1, 12) * 0.12 * (1.1 - skill_level)
+                scroll = rng.beta(7, 3) * 0.30 * skill_level + 0.40   # 8-14 hits / 18
+                smoothness = rng.beta(8, 3) * 0.30 * skill_level * fatigue + 0.45
+                dwell = rng.exponential(0.08) * (1.5 - skill_level) + 0.08
+                nav_speed = rng.beta(7, 3) * 0.30 * skill_level * fatigue + 0.30
+                dir_changes = rng.beta(2, 8) * 0.15 * (1.2 - skill_level) + 0.03
 
             sample = self._clip_and_jitter([
                 click_freq, hesitation, misclick, scroll,
@@ -124,23 +129,26 @@ class BehaviorSimulator:
     def _sim_distracted(self, n: int) -> List[List[float]]:
         """Distracted: sporadic bursts of activity between long idle periods.
 
-        Realistic traits:
-          - Bimodal click pattern: bursts of fast clicks, then nothing
-          - Mouse movement is sparse or absent during idle stretches
-          - When they DO engage, can look briefly focused (the tricky part)
-          - Higher scroll (aimless scrolling)
-          - Variable hesitation (sometimes instant, sometimes very long)
+        Aligned with the TelemetryEngine output for a player hitting 10-30%
+        of targets. Key ranges:
+          click_frequency:     0.02-0.25 (sparse clicking)
+          hesitation_time:     0.25-0.60 (slow / expired targets)
+          misclick_rate:       0.20-0.55 (many misses + expired)
+          scroll_depth:        0.03-0.22 (hit proxy: 1-4 hits / 18)
+          movement_smoothness: 0.05-0.30 (low perfScale dampens even smooth mouse)
+          dwell_time:          0.30-0.65 (lingering or absent)
+          navigation_speed:    0.01-0.15 (minimal cursor activity * low perfScale)
+          direction_changes:   0.15-0.50 (aimless when moving)
         """
         rng = self.rng
 
-        # Per-session traits
-        engagement_prob = rng.beta(3, 5)  # how often they pay attention (0.2-0.6)
-        burst_skill = rng.beta(5, 3)  # when engaged, how good are they
-        idle_depth = rng.uniform(0.3, 0.8)  # how "checked out" idle periods are
+        engagement_prob = rng.beta(3, 5)
+        burst_skill = rng.beta(4, 4)
+        idle_depth = rng.uniform(0.4, 0.8)
 
         samples = []
-        is_engaged = rng.random() < 0.5  # start state
-        state_duration = rng.geometric(0.05)  # how long current state lasts
+        is_engaged = rng.random() < 0.3
+        state_duration = rng.geometric(0.05)
         state_timer = 0
 
         for t in range(n):
@@ -151,25 +159,25 @@ class BehaviorSimulator:
                 state_timer = 0
 
             if is_engaged:
-                # Brief engagement burst — looks somewhat focused
-                click_freq = rng.beta(5, 3) * burst_skill * 0.8
-                hesitation = rng.beta(2, 5) * 0.35
-                misclick = rng.beta(2, 6) * 0.25
-                smoothness = rng.beta(5, 3) * burst_skill * 0.75
-                dwell = rng.beta(2, 5) * 0.3
-                nav_speed = rng.beta(5, 3) * burst_skill * 0.7
-                dir_changes = rng.beta(3, 6) * 0.3
+                # Brief engagement burst
+                click_freq = rng.beta(4, 4) * 0.20 + 0.05
+                hesitation = rng.beta(3, 5) * 0.20 + 0.20
+                misclick = rng.beta(3, 5) * 0.20 + 0.15
+                scroll = rng.beta(4, 5) * 0.12 + 0.08
+                smoothness = rng.beta(4, 4) * 0.20 + 0.10
+                dwell = rng.beta(3, 5) * 0.15 + 0.25
+                nav_speed = rng.beta(3, 5) * 0.10 + 0.03
+                dir_changes = rng.beta(4, 5) * 0.20 + 0.15
             else:
                 # Idle / checked out
-                click_freq = rng.exponential(0.08) * (1 - idle_depth)
-                hesitation = rng.beta(5, 2) * idle_depth
-                misclick = rng.beta(3, 4) * 0.4
-                smoothness = rng.beta(2, 6) * (1 - idle_depth)
-                dwell = rng.beta(4, 3) * idle_depth
-                nav_speed = rng.exponential(0.1) * (1 - idle_depth)
-                dir_changes = rng.beta(4, 5) * 0.5
-
-            scroll = rng.beta(3, 4) * 0.6  # distracted users scroll more
+                click_freq = rng.exponential(0.05) * (1 - idle_depth)
+                hesitation = rng.beta(5, 2) * 0.30 * idle_depth + 0.25
+                misclick = rng.beta(4, 3) * 0.30 + 0.20
+                scroll = rng.beta(2, 8) * 0.10 + 0.02
+                smoothness = rng.beta(2, 7) * 0.15 * (1 - idle_depth) + 0.03
+                dwell = rng.beta(5, 3) * 0.25 * idle_depth + 0.30
+                nav_speed = rng.exponential(0.04) * (1 - idle_depth)
+                dir_changes = rng.beta(5, 4) * 0.25 + 0.20
 
             sample = self._clip_and_jitter([
                 click_freq, hesitation, misclick, scroll,
@@ -182,55 +190,56 @@ class BehaviorSimulator:
     def _sim_confused(self, n: int) -> List[List[float]]:
         """Confused: hesitant, erratic, uncertain — but actively trying.
 
-        Realistic traits:
-          - High hesitation (hover → pull away → hover → click)
-          - Direction changes are frequent (moving toward target, changing mind)
-          - Misclicks are high (clicking wrong things)
-          - Movement is jerky, not smooth
-          - Nav speed varies wildly (slow then sudden panicked movement)
-          - Sometimes confused users accidentally look focused for brief moments
+        Aligned with the TelemetryEngine output for a player hitting 30-50%
+        of targets with erratic movement. Key ranges:
+          click_frequency:     0.15-0.45 (trying but hesitant)
+          hesitation_time:     0.20-0.55 (long pauses before acting)
+          misclick_rate:       0.15-0.45 (many wrong clicks)
+          scroll_depth:        0.15-0.40 (hit proxy: 3-7 hits / 18)
+          movement_smoothness: 0.10-0.35 (jerky movement * medium perfScale)
+          dwell_time:          0.25-0.50 (hovering, uncertain)
+          navigation_speed:    0.15-0.50 (bursts of panicked movement)
+          direction_changes:   0.30-0.70 (constant course corrections)
         """
         rng = self.rng
 
-        # Per-session traits
-        confusion_level = rng.beta(6, 3)  # how confused (0.4-0.9)
-        panic_tendency = rng.beta(3, 4)  # do they rush or freeze
-        has_clarity = rng.random() < 0.3  # 30% chance of a brief clarity window
+        confusion_level = rng.beta(6, 3)  # 0.4-0.9
+        panic_tendency = rng.beta(3, 4)
+        has_clarity = rng.random() < 0.25
         clarity_start = rng.randint(60, 140) if has_clarity else n + 1
-        clarity_duration = rng.randint(10, 30) if has_clarity else 0
+        clarity_duration = rng.randint(10, 25) if has_clarity else 0
 
         samples = []
         for t in range(n):
             in_clarity = clarity_start <= t < clarity_start + clarity_duration
 
             if in_clarity:
-                # Brief moment of understanding — looks focused-ish
-                click_freq = rng.beta(5, 3) * 0.7
-                hesitation = rng.beta(2, 5) * 0.25
-                misclick = rng.beta(2, 7) * 0.15
-                smoothness = rng.beta(6, 3) * 0.7
-                dwell = rng.beta(2, 5) * 0.25
-                nav_speed = rng.beta(5, 3) * 0.65
-                dir_changes = rng.beta(2, 6) * 0.2
+                # Brief moment of understanding
+                click_freq = rng.beta(5, 3) * 0.25 + 0.25
+                hesitation = rng.beta(3, 5) * 0.15 + 0.10
+                misclick = rng.beta(2, 6) * 0.15 + 0.05
+                scroll = rng.beta(5, 3) * 0.15 + 0.25
+                smoothness = rng.beta(5, 3) * 0.25 + 0.25
+                dwell = rng.beta(3, 5) * 0.15 + 0.15
+                nav_speed = rng.beta(5, 3) * 0.20 + 0.20
+                dir_changes = rng.beta(3, 6) * 0.15 + 0.15
             else:
-                # Standard confused behavior
-                base_hesitation = confusion_level * 0.8
+                base_conf = confusion_level
 
-                click_freq = rng.beta(3, 5) * (1 - confusion_level * 0.5)
-                hesitation = rng.beta(5, 2) * base_hesitation + rng.exponential(0.1)
-                misclick = rng.beta(4, 3) * confusion_level * 0.7
-                smoothness = rng.beta(2, 7) * (1 - confusion_level * 0.6)
-                dwell = rng.beta(6, 2) * confusion_level * 0.7
-                nav_speed = rng.beta(2, 4) * (1 - confusion_level * 0.3)
-                dir_changes = rng.beta(6, 2) * confusion_level * 0.8
+                click_freq = rng.beta(4, 5) * 0.25 * (1 - base_conf * 0.3) + 0.12
+                hesitation = rng.beta(5, 3) * 0.25 * base_conf + 0.20
+                misclick = rng.beta(5, 3) * 0.25 * base_conf + 0.12
+                scroll = rng.beta(4, 5) * 0.20 + 0.12
+                smoothness = rng.beta(3, 6) * 0.20 * (1 - base_conf * 0.4) + 0.08
+                dwell = rng.beta(5, 3) * 0.20 * base_conf + 0.22
+                nav_speed = rng.beta(3, 5) * 0.25 * (1 - base_conf * 0.2) + 0.12
+                dir_changes = rng.beta(6, 2) * 0.30 * base_conf + 0.25
 
-                # Panic spikes: sudden fast movement
-                if rng.random() < panic_tendency * 0.15:
-                    nav_speed = rng.beta(7, 2) * 0.9
-                    dir_changes = rng.beta(8, 2) * 0.9
-                    smoothness = rng.beta(1, 8) * 0.3
-
-            scroll = rng.beta(2, 5) * 0.35  # some confused scrolling
+                # Panic spikes
+                if rng.random() < panic_tendency * 0.12:
+                    nav_speed = rng.beta(6, 3) * 0.25 + 0.35
+                    dir_changes = rng.beta(7, 2) * 0.25 + 0.50
+                    smoothness = rng.beta(2, 8) * 0.15 + 0.05
 
             sample = self._clip_and_jitter([
                 click_freq, hesitation, misclick, scroll,
